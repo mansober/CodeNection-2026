@@ -6,7 +6,7 @@
         android:label="@string/app_name"
         android:roundIcon="@drawable/ic_margin"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Breathe">
+        android:theme="@style/Theme.Margin">
         <activity
             android:name=".MainActivity"
             android:exported="true">

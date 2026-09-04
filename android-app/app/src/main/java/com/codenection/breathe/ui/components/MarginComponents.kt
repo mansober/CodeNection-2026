@@ -1,6 +1,7 @@
 package com.codenection.breathe.ui
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas as DrawCanvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -31,6 +32,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -55,10 +60,14 @@ import com.codenection.breathe.ui.theme.TextMuted
 @Composable
 fun MarginMark(modifier: Modifier = Modifier, light: Boolean = false) {
     val color = if (light) Canvas else Forest
-    Box(modifier = modifier.size(34.dp).clearAndSetSemantics { }) {
-        Box(Modifier.width(4.dp).height(34.dp).background(color))
-        Box(Modifier.width(25.dp).height(4.dp).background(color))
-        Box(Modifier.align(Alignment.BottomStart).width(15.dp).height(4.dp).background(color))
+    DrawCanvas(modifier = modifier.size(34.dp).clearAndSetSemantics { }) {
+        val leaf = Path().apply {
+            moveTo(size.width * .18f, size.height * .70f)
+            cubicTo(size.width * .24f, size.height * .26f, size.width * .62f, size.height * .13f, size.width * .82f, size.height * .16f)
+            cubicTo(size.width * .78f, size.height * .58f, size.width * .55f, size.height * .82f, size.width * .18f, size.height * .70f)
+        }
+        drawPath(leaf, color = color, style = Stroke(width = 2.2.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
+        drawLine(color, start = center.copy(x = size.width * .20f, y = size.height * .78f), end = center.copy(x = size.width * .68f, y = size.height * .32f), strokeWidth = 2.2.dp.toPx(), cap = StrokeCap.Round)
     }
 }
 
@@ -72,39 +81,30 @@ fun PageHeader(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 12.dp),
+            .padding(horizontal = 20.dp, vertical = 10.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             if (onBack != null) {
-                TextButton(onClick = onBack, modifier = Modifier.width(68.dp).heightIn(min = 48.dp)) {
-                    Text("Back", color = Ink, fontWeight = FontWeight.SemiBold)
+                TextButton(onClick = onBack, modifier = Modifier.heightIn(min = 48.dp)) {
+                    Text("‹  Back", color = Ink, fontWeight = FontWeight.Medium)
                 }
             } else {
-                MarginMark(Modifier.size(28.dp))
-                Spacer(Modifier.width(14.dp))
+                MarginMark(Modifier.size(24.dp))
+                Spacer(Modifier.width(10.dp))
             }
             Text(
-                eyebrow.uppercase(),
-                color = Forest,
+                eyebrow,
+                color = TextMuted,
                 fontSize = 11.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 1.4.sp,
+                fontWeight = FontWeight.SemiBold,
+                letterSpacing = .35.sp,
             )
         }
-        Row(modifier = Modifier.padding(top = 10.dp)) {
-            Box(
-                Modifier
-                    .padding(top = 5.dp)
-                    .width(3.dp)
-                    .height(if (body == null) 42.dp else 78.dp)
-                    .background(Coral),
-            )
-            Column(Modifier.padding(start = 15.dp)) {
-                Text(title, style = MaterialTheme.typography.headlineMedium)
-                if (body != null) {
-                    Spacer(Modifier.height(7.dp))
-                    Text(body, color = TextMuted, style = MaterialTheme.typography.bodyMedium)
-                }
+        Column(Modifier.padding(top = 6.dp)) {
+            Text(title, style = MaterialTheme.typography.headlineMedium)
+            if (body != null) {
+                Spacer(Modifier.height(5.dp))
+                Text(body, color = TextMuted, style = MaterialTheme.typography.bodyMedium)
             }
         }
     }
@@ -121,7 +121,7 @@ fun PrimaryButton(
         onClick = onClick,
         modifier = modifier.fillMaxWidth().height(54.dp),
         enabled = enabled,
-        shape = RoundedCornerShape(10.dp),
+        shape = RoundedCornerShape(12.dp),
         colors = ButtonDefaults.buttonColors(containerColor = Forest, disabledContainerColor = OutlineSoft),
     ) {
         Text(text, fontWeight = FontWeight.Bold)
@@ -133,7 +133,7 @@ fun SecondaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modi
     OutlinedButton(
         onClick = onClick,
         modifier = modifier.fillMaxWidth().height(52.dp),
-        shape = RoundedCornerShape(10.dp),
+        shape = RoundedCornerShape(12.dp),
         border = BorderStroke(1.dp, Ink),
     ) {
         Text(text, color = Ink, fontWeight = FontWeight.SemiBold)
@@ -147,7 +147,7 @@ fun SectionLabel(text: String, action: String? = null, onAction: (() -> Unit)? =
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(text.uppercase(), color = TextMuted, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.2.sp)
+        Text(text, color = Ink, style = MaterialTheme.typography.titleMedium)
         if (action != null && onAction != null) {
             TextButton(onClick = onAction, modifier = Modifier.heightIn(min = 48.dp)) {
                 Text(action, color = Forest, fontWeight = FontWeight.Bold)
@@ -247,30 +247,29 @@ fun ChoicePill(text: String, selected: Boolean, onClick: () -> Unit, modifier: M
             .heightIn(min = 48.dp)
             .selectable(selected = selected, role = Role.RadioButton, onClick = onClick)
             .semantics { stateDescription = if (selected) "Selected" else "Not selected" },
-        shape = RoundedCornerShape(23.dp),
-        color = if (selected) Ink else Color.Transparent,
-        border = BorderStroke(1.dp, if (selected) Ink else OutlineStrong),
+        shape = RoundedCornerShape(10.dp),
+        color = if (selected) Forest else Paper,
+        border = BorderStroke(1.dp, if (selected) Forest else OutlineSoft),
     ) {
         Box(Modifier.padding(horizontal = 14.dp), contentAlignment = Alignment.Center) {
-            Text(text, color = if (selected) Canvas else Ink, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+            Text(text, color = if (selected) Color.White else Ink, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
         }
     }
 }
 
-enum class MainTab(val label: String, val mark: String) {
-    Home("Home", "H"),
-    Add("Add", "+"),
-    See("See", "S"),
-    FiveD("5D", "5"),
+enum class MainTab(val label: String) {
+    Today("Today"),
+    Plan("Plan"),
+    CheckIn("Check-in"),
+    Recover("Recover"),
 }
 
 @Composable
 fun AppBottomBar(selected: MainTab, onSelect: (MainTab) -> Unit) {
-    Surface(color = Paper) {
-        Column {
-            HorizontalDivider(color = OutlineSoft)
+    Box(Modifier.fillMaxWidth().background(Canvas).padding(horizontal = 20.dp, vertical = 8.dp)) {
+        Surface(color = Paper, shape = RoundedCornerShape(18.dp), border = BorderStroke(1.dp, OutlineSoft)) {
             Row(
-                modifier = Modifier.fillMaxWidth().height(74.dp).padding(horizontal = 8.dp),
+                modifier = Modifier.fillMaxWidth().height(64.dp).padding(horizontal = 6.dp),
                 horizontalArrangement = Arrangement.SpaceAround,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -279,26 +278,63 @@ fun AppBottomBar(selected: MainTab, onSelect: (MainTab) -> Unit) {
                     Column(
                         modifier = Modifier
                             .weight(1f)
-                            .height(64.dp)
+                            .height(56.dp)
                             .selectable(selected = isSelected, role = Role.Tab) { onSelect(tab) }
-                            .padding(top = 12.dp),
+                            .padding(vertical = 5.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
                     ) {
                         Box(
                             modifier = Modifier
-                                .width(28.dp)
-                                .height(3.dp)
-                                .background(if (isSelected) Forest else Color.Transparent, RoundedCornerShape(2.dp)),
-                        )
-                        Spacer(Modifier.height(9.dp))
+                                .size(width = 50.dp, height = 29.dp)
+                                .background(if (isSelected) Mint else Color.Transparent, RoundedCornerShape(11.dp)),
+                            contentAlignment = Alignment.Center,
+                        ) { NavGlyph(tab, if (isSelected) Forest else TextMuted) }
                         Text(
                             tab.label,
                             color = if (isSelected) Forest else TextMuted,
-                            fontSize = 12.sp,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                            fontSize = 10.sp,
+                            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
                         )
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun NavGlyph(tab: MainTab, color: Color) {
+    DrawCanvas(Modifier.size(22.dp).clearAndSetSemantics { }) {
+        val sw = 1.8.dp.toPx()
+        val line = Stroke(width = sw, cap = StrokeCap.Round, join = StrokeJoin.Round)
+        when (tab) {
+            MainTab.Today -> {
+                drawRect(color, topLeft = center.copy(x = size.width * .20f, y = size.height * .36f), size = size.copy(width = size.width * .60f, height = size.height * .46f), style = line)
+                drawLine(color, center.copy(x = size.width * .38f, y = size.height * .36f), center.copy(x = size.width * .38f, y = size.height * .23f), sw)
+                drawLine(color, center.copy(x = size.width * .62f, y = size.height * .36f), center.copy(x = size.width * .62f, y = size.height * .23f), sw)
+                drawLine(color, center.copy(x = size.width * .38f, y = size.height * .23f), center.copy(x = size.width * .62f, y = size.height * .23f), sw)
+            }
+            MainTab.Plan -> {
+                drawRect(color, topLeft = center.copy(x = size.width * .16f, y = size.height * .24f), size = size.copy(width = size.width * .68f, height = size.height * .60f), style = line)
+                drawLine(color, center.copy(x = size.width * .16f, y = size.height * .42f), center.copy(x = size.width * .84f, y = size.height * .42f), sw)
+                drawLine(color, center.copy(x = size.width * .34f, y = size.height * .16f), center.copy(x = size.width * .34f, y = size.height * .32f), sw)
+                drawLine(color, center.copy(x = size.width * .66f, y = size.height * .16f), center.copy(x = size.width * .66f, y = size.height * .32f), sw)
+            }
+            MainTab.CheckIn -> {
+                drawCircle(color, radius = size.minDimension * .36f, style = line)
+                drawCircle(color, radius = sw * .55f, center = center.copy(x = size.width * .38f, y = size.height * .43f))
+                drawCircle(color, radius = sw * .55f, center = center.copy(x = size.width * .62f, y = size.height * .43f))
+                drawArc(color, startAngle = 25f, sweepAngle = 130f, useCenter = false, topLeft = center.copy(x = size.width * .31f, y = size.height * .48f), size = size.copy(width = size.width * .38f, height = size.height * .25f), style = line)
+            }
+            MainTab.Recover -> {
+                val path = Path().apply {
+                    moveTo(size.width * .28f, size.height * .74f)
+                    cubicTo(size.width * .20f, size.height * .38f, size.width * .55f, size.height * .16f, size.width * .78f, size.height * .20f)
+                    cubicTo(size.width * .80f, size.height * .52f, size.width * .60f, size.height * .78f, size.width * .28f, size.height * .74f)
+                }
+                drawPath(path, color, style = line)
+                drawLine(color, center.copy(x = size.width * .28f, y = size.height * .82f), center.copy(x = size.width * .68f, y = size.height * .34f), sw, StrokeCap.Round)
             }
         }
     }

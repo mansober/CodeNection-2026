@@ -14,6 +14,10 @@ app/
     lib/api.ts       # Typed API client
     types/           # Shared frontend types
   package.json       # Expo project manifest
+android-app/
+  app/               # Native Android Margin prototype
+  docs/              # Product, screen-map, design, and verification notes
+  gradle/             # Gradle wrapper support
 backend/
   app/
     main.py          # FastAPI application entry point
@@ -32,6 +36,10 @@ compose.yaml          # Local PostgreSQL + backend services
 `app/package.json` stays at the Expo project root because Expo, Metro, and npm
 resolve the app manifest from that directory. The requested source layout is
 under `app/src`.
+
+The complete Android judging prototype lives in [`android-app`](android-app/README.md).
+It is intentionally isolated from the Expo client so Android Studio can open a
+clean Gradle project without treating the full-stack repository as an Android module.
 
 ## Quick start
 

@@ -4,37 +4,52 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import com.codenection.breathe.CapacityKind
 import com.codenection.breathe.Commitment
+import com.codenection.breathe.RoutineEntry
+import com.codenection.breathe.routineCatalog
 import com.codenection.breathe.sampleCommitments
 import com.codenection.breathe.upsertCommitment
 import com.codenection.breathe.weekendHackathon
 
 enum class AppScreen {
     Welcome,
+    RoutineChecklist,
+    RoutineHours,
+    FeelQuestions,
     SetupChoice,
     ImportTimetable,
     AddOnboarding,
-    DescribeWeek,
-    CheckLimits,
+    AnythingElse,
     Home,
     Add,
     See,
     FiveD,
     TestCommitment,
     Simulator,
+    CheckIn,
+    Recovery,
+    RebalancedWeek,
 }
 
 @Composable
-fun BreatheApp() {
+fun MarginApp() {
     var screenName by rememberSaveable { mutableStateOf(AppScreen.Welcome.name) }
     var previousName by rememberSaveable { mutableStateOf(AppScreen.Welcome.name) }
     var nudgeThreshold by rememberSaveable { mutableStateOf("90%") }
     var editingCommitmentName by rememberSaveable { mutableStateOf<String?>(null) }
     val commitments = remember { mutableStateListOf<Commitment>().also { it.addAll(sampleCommitments) } }
+    val selectedRoutineIds = remember { mutableStateListOf("classes") }
+    val routineEntries = remember {
+        mutableStateMapOf("classes" to RoutineEntry(durationHours = 2.0, timesPerWeek = 5))
+    }
+    val feelAnswers = remember { mutableStateMapOf<CapacityKind, Int>() }
+    var recoveryChoice by rememberSaveable { mutableStateOf<Int?>(null) }
     val screen = AppScreen.valueOf(screenName)
 
     fun navigate(destination: AppScreen) {
@@ -43,13 +58,12 @@ fun BreatheApp() {
     }
 
     fun selectTab(tab: MainTab) {
-        if (tab == MainTab.Add) editingCommitmentName = null
         navigate(
             when (tab) {
-                MainTab.Home -> AppScreen.Home
-                MainTab.Add -> AppScreen.Add
-                MainTab.See -> AppScreen.See
-                MainTab.FiveD -> AppScreen.FiveD
+                MainTab.Today -> AppScreen.Home
+                MainTab.Plan -> AppScreen.See
+                MainTab.CheckIn -> AppScreen.CheckIn
+                MainTab.Recover -> AppScreen.Recovery
             },
         )
     }
@@ -57,18 +71,23 @@ fun BreatheApp() {
     BackHandler(enabled = screen != AppScreen.Welcome) {
         navigate(
             when (screen) {
-                AppScreen.SetupChoice -> AppScreen.Welcome
+                AppScreen.RoutineChecklist -> AppScreen.Welcome
+                AppScreen.RoutineHours -> AppScreen.RoutineChecklist
+                AppScreen.FeelQuestions -> AppScreen.RoutineHours
+                AppScreen.SetupChoice -> AppScreen.FeelQuestions
                 AppScreen.ImportTimetable,
-                AppScreen.AddOnboarding,
-                AppScreen.DescribeWeek -> AppScreen.SetupChoice
-                AppScreen.CheckLimits -> AppScreen.SetupChoice
+                AppScreen.AddOnboarding -> AppScreen.SetupChoice
+                AppScreen.AnythingElse -> AppScreen.valueOf(previousName)
                 AppScreen.Home -> AppScreen.Welcome
                 AppScreen.Add -> {
                     editingCommitmentName = null
                     if (previousName == AppScreen.See.name) AppScreen.See else AppScreen.Home
                 }
                 AppScreen.See,
-                AppScreen.FiveD -> AppScreen.Home
+                AppScreen.FiveD,
+                AppScreen.CheckIn,
+                AppScreen.Recovery,
+                AppScreen.RebalancedWeek -> AppScreen.Home
                 AppScreen.TestCommitment -> AppScreen.Add
                 AppScreen.Simulator -> AppScreen.TestCommitment
                 AppScreen.Welcome -> AppScreen.Welcome
@@ -77,27 +96,61 @@ fun BreatheApp() {
     }
 
     when (screen) {
-        AppScreen.Welcome -> WelcomeScreen(onStart = { navigate(AppScreen.SetupChoice) })
-        AppScreen.SetupChoice -> SetupChoiceScreen(
+        AppScreen.Welcome -> WelcomeScreen(onStart = { navigate(AppScreen.RoutineChecklist) })
+        AppScreen.RoutineChecklist -> RoutineChecklistScreen(
+            selectedIds = selectedRoutineIds.toSet(),
+            onToggle = { id ->
+                if (id in selectedRoutineIds) {
+                    selectedRoutineIds.remove(id)
+                    routineEntries.remove(id)
+                } else {
+                    selectedRoutineIds.add(id)
+                    routineEntries.putIfAbsent(id, RoutineEntry())
+                }
+            },
             onBack = { navigate(AppScreen.Welcome) },
+            onContinue = { navigate(AppScreen.RoutineHours) },
+        )
+        AppScreen.RoutineHours -> RoutineHoursScreen(
+            selectedItems = routineCatalog.filter { it.id in selectedRoutineIds },
+            entries = routineEntries,
+            onEntryChange = { id, entry -> routineEntries[id] = entry },
+            onBack = { navigate(AppScreen.RoutineChecklist) },
+            onContinue = { navigate(AppScreen.FeelQuestions) },
+        )
+        AppScreen.FeelQuestions -> FeelQuestionsScreen(
+            entries = routineEntries.filterKeys { it in selectedRoutineIds },
+            answers = feelAnswers,
+            recoveryChoice = recoveryChoice,
+            onAnswer = { kind, answer -> feelAnswers[kind] = answer },
+            onRecovery = { recoveryChoice = it },
+            onBack = { navigate(AppScreen.RoutineHours) },
+            onContinue = { navigate(AppScreen.SetupChoice) },
+        )
+        AppScreen.SetupChoice -> SetupChoiceScreen(
+            onBack = { navigate(AppScreen.FeelQuestions) },
             onImport = { navigate(AppScreen.ImportTimetable) },
             onManual = { navigate(AppScreen.AddOnboarding) },
-            onDescribe = { navigate(AppScreen.DescribeWeek) },
+            onSkip = { navigate(AppScreen.Home) },
         )
         AppScreen.ImportTimetable -> ImportTimetableScreen(
+            originalClassHours = routineEntries["classes"]?.weeklyHours ?: 0.0,
+            onClassHoursChanged = { hours ->
+                routineEntries["classes"] = if (hours == 18.0) {
+                    RoutineEntry(durationHours = 3.0, timesPerWeek = 6)
+                } else {
+                    RoutineEntry(durationHours = 2.0, timesPerWeek = 5)
+                }
+            },
             onBack = { navigate(AppScreen.SetupChoice) },
-            onContinue = { navigate(AppScreen.CheckLimits) },
+            onContinue = { navigate(AppScreen.AnythingElse) },
         )
         AppScreen.AddOnboarding -> AddCommitmentOnboardingScreen(
             onBack = { navigate(AppScreen.SetupChoice) },
-            onContinue = { navigate(AppScreen.CheckLimits) },
+            onContinue = { navigate(AppScreen.AnythingElse) },
         )
-        AppScreen.DescribeWeek -> DescribeWeekScreen(
-            onBack = { navigate(AppScreen.SetupChoice) },
-            onContinue = { navigate(AppScreen.CheckLimits) },
-        )
-        AppScreen.CheckLimits -> CheckLimitsScreen(
-            onBack = { navigate(AppScreen.SetupChoice) },
+        AppScreen.AnythingElse -> AnythingElseScreen(
+            onBack = { navigate(AppScreen.valueOf(previousName)) },
             onContinue = { navigate(AppScreen.Home) },
         )
         AppScreen.Home -> HomeScreen(
@@ -107,6 +160,10 @@ fun BreatheApp() {
             onRebalance = { navigate(AppScreen.FiveD) },
             onSeeAll = { navigate(AppScreen.See) },
             onTest = { navigate(AppScreen.TestCommitment) },
+            onAdd = {
+                editingCommitmentName = null
+                navigate(AppScreen.Add)
+            },
         )
         AppScreen.Add -> AddTabScreen(
             initialCommitment = commitments.firstOrNull { it.name == editingCommitmentName },
@@ -137,7 +194,8 @@ fun BreatheApp() {
             },
         )
         AppScreen.FiveD -> FiveDScreen(
-            onTab = ::selectTab,
+            onBack = { navigate(AppScreen.Home) },
+            onApplied = { navigate(AppScreen.RebalancedWeek) },
             onTest = { navigate(AppScreen.TestCommitment) },
         )
         AppScreen.TestCommitment -> TestCommitmentScreen(
@@ -159,5 +217,14 @@ fun BreatheApp() {
             },
             onMakeRoom = { navigate(AppScreen.FiveD) },
         )
+        AppScreen.CheckIn -> CheckInScreen(
+            onTab = ::selectTab,
+            onSaved = { navigate(AppScreen.Home) },
+        )
+        AppScreen.Recovery -> RecoveryScreen(
+            onTab = ::selectTab,
+            onBlockTime = { navigate(AppScreen.RebalancedWeek) },
+        )
+        AppScreen.RebalancedWeek -> RebalancedWeekScreen(onReturn = { navigate(AppScreen.Home) })
     }
 }

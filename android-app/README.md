@@ -1,47 +1,97 @@
-# Margin Android prototype
+# Margin Android MVP
 
-Margin helps involved university students see the cost of a commitment before saying yes. This native Android prototype is built with Kotlin and Jetpack Compose.
+Margin is a native Android prototype for the Lifestyle Track: Beating the Burnout.
+It helps university students see the cost of a commitment before saying yes, then
+make room for recovery when the week is overloaded.
 
-For the complete implementation summary, screenshots, verification results, and judging flow, see [MARGIN_MVP_HANDOFF.md](MARGIN_MVP_HANDOFF.md).
+## Open the correct project
 
-## MVP screens
+Open this directory—not the repository root—in Android Studio:
 
-1. Get started
-2. Setup method chooser
-3. Import timetable
-4. Add a commitment during onboarding
-5. Describe a week in natural language
-6. Check personal limits
-7. Home
-8. Add
-9. See
-10. 5D rebalance
-11. Test a commitment
-12. What-if simulator
+```text
+C:\Users\User\OneDrive\Documents\DEGREE\Projects\CodeNection-2026\android-app
+```
 
-Only Home, Add, See, and 5D use the persistent bottom navigation.
+Select the `app` run configuration and an Android emulator, then click **Run**.
 
-## Run
-
-Open this `android-app` folder in Android Studio and run the `app` configuration on an Android emulator or device.
-
-From PowerShell:
+PowerShell equivalent:
 
 ```powershell
+cd 'C:\Users\User\OneDrive\Documents\DEGREE\Projects\CodeNection-2026\android-app'
 $env:JAVA_HOME = 'C:\Program Files\Android\Android Studio\jbr'
-.\gradlew.bat assembleDebug
+.\gradlew.bat testDebugUnitTest lintDebug assembleDebug
 ```
 
 The debug APK is generated at `app/build/outputs/apk/debug/app-debug.apk`.
 
-## Suggested judging demo
+## MVP screen map
 
-1. Choose **Add one by one** and review the four personal limits.
-2. On Home, point out the 81 Load Index and mental load at 112%.
-3. Open **5D rebalance**, reassign one suggestion, and apply the plan.
-4. Choose **Test another commitment** and test the Weekend Hackathon.
-5. Compare Now vs If Yes, then choose **Add anyway**.
-6. Confirm the hackathon now appears in **See**. It was absent while hypothetical.
-7. Expand it, edit its load, save, then remove it to demonstrate that confirmed commitments use the same state as the rest of the week.
+1. Welcome
+2. Normal-week checklist
+3. Hours per selected routine item
+4. Conditional feel questions and recovery target
+5. Specific-commitment chooser
+6. Timetable import
+7. Add one commitment during onboarding
+8. Optional “anything else?” note
+9. Today dashboard
+10. Add commitment
+11. Plan / commitment list
+12. 5D rebalance
+13. Test a commitment
+14. What-if simulator
+15. Daily check-in
+16. Recovery
+17. Rebalanced-week confirmation
 
-The visual and interaction rationale is documented in [DESIGN.md](DESIGN.md).
+The persistent navigation is **Today**, **Plan**, **Check-in**, and **Recover**.
+Task screens such as Add, 5D, the simulator, and confirmation use focused back or
+completion actions instead of duplicating the tab bar.
+
+## Product rules implemented
+
+- The recurring routine and named commitments are collected separately.
+- Classes / lectures starts selected; only selected activities receive hour rows.
+- Mental and Time feel questions always appear. Physical and Social appear only when
+  a selected activity has a weight of at least 0.4 in that dimension.
+- Errands & chores load Time and Physical in the four-bar model.
+- Timetable contradictions update the baseline visibly, retain both values, and can
+  be undone.
+- The optional free-text parser can add or flag information but never overwrite the
+  structured baseline.
+- Hypothetical commitments stay separate until explicitly confirmed.
+- Primary touch targets are at least 48dp and status meaning is never color-only.
+
+## Project structure
+
+```text
+app/src/main/java/com/codenection/breathe/
+  Capacity.kt                 # Capacity and commitment model
+  OnboardingModel.kt          # Routine weights, limits, and reconciliation rules
+  MainActivity.kt
+  ui/
+    components/               # Shared controls and navigation
+    navigation/               # App state and screen routing
+    screens/
+      onboarding/
+      planning/
+      rebalance/
+      recovery/
+    theme/                    # IBM Plex Sans, color, and type tokens
+docs/
+  DESIGN.md
+  MARGIN_MVP_HANDOFF.md
+  ONBOARDING_MODEL.md
+  SCREEN_MAP.md
+  licenses/
+  screenshots/
+```
+
+## Design and handoff
+
+- [Design rationale](docs/DESIGN.md)
+- [Complete screen map](docs/SCREEN_MAP.md)
+- [Onboarding model](docs/ONBOARDING_MODEL.md)
+- [MVP handoff](docs/MARGIN_MVP_HANDOFF.md)
+- [Editable design board](docs/design/margin-mobile-mvp.svg)
+- [Verified emulator captures](docs/screenshots/final/)

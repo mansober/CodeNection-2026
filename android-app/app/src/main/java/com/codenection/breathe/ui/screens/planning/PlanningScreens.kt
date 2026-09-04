@@ -65,65 +65,56 @@ fun HomeScreen(
     onRebalance: () -> Unit,
     onSeeAll: () -> Unit,
     onTest: () -> Unit,
+    onAdd: () -> Unit,
 ) {
-    Scaffold(containerColor = Canvas, bottomBar = { AppBottomBar(MainTab.Home, onTab) }) { padding ->
+    Scaffold(containerColor = Canvas, bottomBar = { AppBottomBar(MainTab.Today, onTab) }) { padding ->
         Column(
             Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(horizontal = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(18.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Spacer(Modifier.height(10.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Column {
-                    Text("DEMO WEEK · 31 AUG–6 SEP", color = Forest, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp)
-                    Text("Your week", style = MaterialTheme.typography.headlineMedium)
+                    Text("Good morning", color = TextMuted, style = MaterialTheme.typography.bodyMedium)
+                    Text("How full is this week?", style = MaterialTheme.typography.headlineMedium)
+                    Text("Sample week · Sep 7–13", color = TextMuted, fontSize = 11.sp, fontWeight = FontWeight.Medium)
                 }
-                MarginMark()
+                TextButton(onClick = onAdd, modifier = Modifier.heightIn(min = 48.dp)) {
+                    Text("Add", color = Forest, fontWeight = FontWeight.Bold)
+                }
             }
             OverallLoadPanel(onRebalance)
             Column(verticalArrangement = Arrangement.spacedBy(15.dp)) {
-                SectionLabel("Your four capacities")
-                sampleCapacities.forEach { CapacityBar(it) }
-            }
-            AlertNote("Mental load is over your limit", "One change could bring it from 112% to 94% and reopen Saturday.")
-            Button(onClick = onRebalance, modifier = Modifier.fillMaxWidth().height(54.dp), shape = RoundedCornerShape(10.dp)) {
-                Text("Rebalance with 5D", fontWeight = FontWeight.Bold)
-            }
-            SectionLabel("Nudge me when I reach")
-            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf("75%", "90%", "100%", "Off").forEach { option ->
-                    ChoicePill(option, option == threshold, { onThresholdChange(option) })
+                SectionLabel("Where the pressure sits")
+                sampleCapacities.forEach { value ->
+                    CapacityBar(value, compact = true)
+                    if (value.kind == CapacityKind.Time) Text("Two deadlines land on Friday", color = TextMuted, fontSize = 11.sp)
+                    if (value.kind == CapacityKind.Mental) Text("Focus has been low since Tuesday", color = TextMuted, fontSize = 11.sp)
                 }
             }
-            RuleSection {
-                Column(verticalArrangement = Arrangement.spacedBy(13.dp)) {
-                    ForecastLine("NEXT WEEK", "Mental drops to about 64%", "3 items wrap up")
-                    ForecastLine("RECOVERY", "3.5 hours protected", "Fri evening + Sun morning")
-                }
-            }
-            SectionLabel("This week", "See all", onSeeAll)
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Column {
-                    Text("5", fontSize = 34.sp, fontWeight = FontWeight.Black)
-                    Text("commitments", color = TextMuted)
-                }
-                Column(horizontalAlignment = Alignment.End) {
-                    Text("3", fontSize = 34.sp, fontWeight = FontWeight.Black, color = Forest)
-                    Text("wrap up", color = TextMuted)
-                }
-            }
-            Surface(
-                modifier = Modifier.fillMaxWidth().clickable(role = Role.Button, onClick = onTest),
-                color = Mint,
-                shape = RoundedCornerShape(10.dp),
-            ) {
-                Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) {
-                        Text("Before you say yes", fontWeight = FontWeight.Bold)
-                        Text("Test a new commitment without adding it.", color = TextMuted, fontSize = 13.sp)
+            Surface(color = Mint, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth()) {
+                Row(Modifier.padding(15.dp), verticalAlignment = Alignment.Top) {
+                    MarginMark(Modifier.size(27.dp))
+                    Column(Modifier.padding(start = 12.dp)) {
+                        Text("A small reset would help", fontWeight = FontWeight.Bold)
+                        Text("Block 20 minutes outside after class.", color = TextMuted, fontSize = 13.sp)
+                        TextButton(onClick = { onTab(MainTab.Recover) }, modifier = Modifier.heightIn(min = 48.dp)) {
+                            Text("Add recovery block", color = Ink, fontWeight = FontWeight.SemiBold)
+                        }
                     }
-                    Text("Test impact", color = Forest, fontWeight = FontWeight.Bold)
                 }
             }
+            Button(onClick = onRebalance, modifier = Modifier.fillMaxWidth().height(54.dp), shape = RoundedCornerShape(10.dp)) {
+                Text("Rebalance this week", fontWeight = FontWeight.Bold)
+            }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton(onClick = onSeeAll, modifier = Modifier.weight(1f).heightIn(min = 48.dp)) { Text("View plan", color = Forest, fontWeight = FontWeight.SemiBold) }
+                TextButton(onClick = onTest, modifier = Modifier.weight(1f).heightIn(min = 48.dp)) { Text("Test a yes", color = Forest, fontWeight = FontWeight.SemiBold) }
+            }
+            TextButton(
+                onClick = { onThresholdChange(if (threshold == "90%") "100%" else "90%") },
+                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+            ) { Text("Nudge at $threshold", color = TextMuted, fontSize = 12.sp) }
             Spacer(Modifier.height(18.dp))
         }
     }
@@ -132,25 +123,22 @@ fun HomeScreen(
 @Composable
 private fun OverallLoadPanel(onRebalance: () -> Unit) {
     Surface(
-        color = Ink,
+        color = com.codenection.breathe.ui.theme.DeepForest,
         shape = RoundedCornerShape(18.dp),
         modifier = Modifier.fillMaxWidth().semantics {
             contentDescription = "Demo overall load, 81 out of 100. One capacity is over its limit."
         },
     ) {
         Column(Modifier.padding(20.dp)) {
-            Text("OVERALL LOAD", color = Canvas.copy(alpha = 0.72f), fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.3.sp)
+            Text("TOTAL CAPACITY", color = Canvas.copy(alpha = 0.78f), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
-                Text("81", color = Color.White, fontSize = 64.sp, fontWeight = FontWeight.Light)
-                Text(" / 100", color = Canvas.copy(alpha = 0.7f), modifier = Modifier.padding(bottom = 13.dp))
+                Text("90%", color = Color.White, fontSize = 52.sp, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.weight(1f))
-                Box(Modifier.size(12.dp).background(Coral, CircleShape))
+                Box(Modifier.size(64.dp).background(Forest.copy(alpha = .45f), CircleShape), contentAlignment = Alignment.Center) {
+                    Text("✓", color = Color.White, fontSize = 30.sp, fontWeight = FontWeight.Medium)
+                }
             }
-            HorizontalDivider(color = Color.White.copy(alpha = 0.2f), modifier = Modifier.padding(vertical = 14.dp))
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text("One area is over its limit", color = Color.White, fontWeight = FontWeight.SemiBold)
-                TextButton(onClick = onRebalance) { Text("Fix it", color = Color.White, fontWeight = FontWeight.Bold) }
-            }
+            Text("You are carrying more than fits.", color = Canvas.copy(alpha = .84f), fontSize = 13.sp)
         }
     }
 }
@@ -183,24 +171,26 @@ fun AddTabScreen(
     var physical by remember(formKey) { mutableFloatStateOf(initialCommitment?.physical?.div(4f)?.coerceIn(1f, 5f) ?: 2f) }
     var social by remember(formKey) { mutableFloatStateOf(initialCommitment?.social?.div(5f)?.coerceIn(1f, 5f) ?: 2f) }
 
-    Scaffold(containerColor = Canvas, bottomBar = { AppBottomBar(MainTab.Add, onTab) }) { padding ->
+    Scaffold(containerColor = Canvas) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState())) {
-            PageHeader(
-                if (initialCommitment == null) "Add" else "Edit commitment",
-                if (initialCommitment == null) "What are you making room for?" else "Adjust what this asks of you",
-                "Rate the cost, not how important it sounds.",
-            )
+            PageHeader(if (initialCommitment == null) "Add commitment" else "Edit commitment", if (initialCommitment == null) "What needs your attention?" else "Adjust what this asks of you", "Rate the cost, not how important it sounds.", onBack = { onTab(MainTab.Plan) })
             Column(Modifier.padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(17.dp)) {
                 DashboardField("COMMITMENT", name, "e.g. Lab report") { name = it }
                 InlineChoice("CATEGORY", listOf("Class", "Club", "Job", "Sport", "Social"), category) { category = it }
                 InlineChoice("FLEXIBILITY", listOf("Fixed", "Somewhat", "Flexible"), flexibility) { flexibility = it }
                 InlineChoice("DURATION", listOf("This week", "Every week", "Until date"), duration) { duration = it }
-                SectionLabel("Estimated load")
+                SectionLabel("What will it draw on?")
                 CompactSlider("Time", time) { time = it }
                 CompactSlider("Mental", mental) { mental = it }
                 CompactSlider("Physical", physical) { physical = it }
                 CompactSlider("Social", social) { social = it }
-                PrimaryButton(if (initialCommitment == null) "Add to my week" else "Save changes", onClick = {
+                Surface(color = Color(0xFFF4E8D6), shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth()) {
+                    Row(Modifier.padding(17.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Column { Text("Load preview", fontSize = 11.sp, fontWeight = FontWeight.SemiBold); Text("76%  →  82%", fontSize = 20.sp, fontWeight = FontWeight.Bold) }
+                        Text("Within your limit", color = TextMuted, fontSize = 12.sp, modifier = Modifier.align(Alignment.Bottom))
+                    }
+                }
+                PrimaryButton(if (initialCommitment == null) "Add to this week" else "Save changes", onClick = {
                     onSaved(Commitment(name.trim(), category, initialCommitment?.schedule ?: "New commitment", flexibility, (time * 4).toInt(), (mental * 5).toInt(), (physical * 4).toInt(), (social * 5).toInt()))
                 }, enabled = name.isNotBlank())
                 if (initialCommitment == null) {
@@ -234,9 +224,9 @@ fun SeeScreen(
     onEdit: (Commitment) -> Unit,
 ) {
     var expanded by remember { mutableStateOf<String?>(null) }
-    Scaffold(containerColor = Canvas, bottomBar = { AppBottomBar(MainTab.See, onTab) }) { padding ->
+    Scaffold(containerColor = Canvas, bottomBar = { AppBottomBar(MainTab.Plan, onTab) }) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState())) {
-            PageHeader("See", "What is taking up your week?", "Tap an item to inspect or change it.")
+            PageHeader("Plan", "What is taking up your week?", "Tap an item to inspect or change it.")
             Column(Modifier.padding(horizontal = 20.dp)) {
                 if (commitments.isEmpty()) {
                     EmptyWeek(onAdd)

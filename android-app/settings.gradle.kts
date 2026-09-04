@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Breathe"
+rootProject.name = "Margin"
 include(":app")

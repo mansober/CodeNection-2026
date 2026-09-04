@@ -8,10 +8,10 @@ enum class CapacityKind(
     val unit: String,
     val color: Color,
 ) {
-    Time("Time", "TIME", "hours", Color(0xFF355A50)),
-    Mental("Mental", "MENTAL", "points", Color(0xFFA63F21)),
-    Physical("Physical", "PHYSICAL", "points", Color(0xFF64736D)),
-    Social("Social", "SOCIAL", "points", Color(0xFF8B7A55)),
+    Time("Time", "TIME", "hours", Color(0xFF0F6B4F)),
+    Mental("Mental", "MENTAL", "points", Color(0xFFD45F4E)),
+    Physical("Physical", "PHYSICAL", "points", Color(0xFFC68A2E)),
+    Social("Social", "SOCIAL", "points", Color(0xFF6F67B6)),
 }
 
 data class CapacityValue(
@@ -29,10 +29,10 @@ fun capacityPercent(used: Int, limit: Int): Int {
 }
 
 val sampleCapacities = listOf(
-    CapacityValue(CapacityKind.Time, used = 64, limit = 100),
-    CapacityValue(CapacityKind.Mental, used = 112, limit = 100),
-    CapacityValue(CapacityKind.Physical, used = 41, limit = 100),
-    CapacityValue(CapacityKind.Social, used = 58, limit = 100),
+    CapacityValue(CapacityKind.Time, used = 96, limit = 100),
+    CapacityValue(CapacityKind.Mental, used = 88, limit = 100),
+    CapacityValue(CapacityKind.Physical, used = 72, limit = 100),
+    CapacityValue(CapacityKind.Social, used = 64, limit = 100),
 )
 
 data class Commitment(

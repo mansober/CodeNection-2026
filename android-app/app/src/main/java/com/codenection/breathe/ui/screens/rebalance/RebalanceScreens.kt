@@ -70,12 +70,12 @@ private val rebalanceItems = listOf(
 private val fiveDs = listOf("Do", "Delay", "Delegate", "Drop", "Decompress")
 
 @Composable
-fun FiveDScreen(onTab: (MainTab) -> Unit, onTest: () -> Unit) {
+fun FiveDScreen(onBack: () -> Unit, onApplied: () -> Unit, onTest: () -> Unit) {
     val assignments = remember { mutableStateMapOf<String, String>().apply { rebalanceItems.forEach { put(it.name, it.suggested) } } }
     var applied by remember { mutableStateOf(false) }
-    Scaffold(containerColor = Canvas, bottomBar = { AppBottomBar(MainTab.FiveD, onTab) }) { padding ->
+    Scaffold(containerColor = Canvas) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState())) {
-            PageHeader("5D rebalance", "Make room without guessing", "These are starting points. Change any assignment before applying.")
+            PageHeader("Rebalance", "Make room for Friday", "Two lower-stakes tasks can move without harm. Edit any 5D assignment first.", onBack)
             Column(Modifier.padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 BeforeAfterSummary(applied)
                 if (applied) {
@@ -101,7 +101,7 @@ fun FiveDScreen(onTab: (MainTab) -> Unit, onTest: () -> Unit) {
                         Text("Sunday: slow breakfast before opening your laptop", fontWeight = FontWeight.SemiBold)
                     }
                 }
-                PrimaryButton(if (applied) "Plan is applied" else "Apply these changes", { applied = true }, enabled = !applied)
+                PrimaryButton(if (applied) "Plan is applied" else "Apply 2 changes", { applied = true; onApplied() }, enabled = !applied)
                 TextButton(onClick = onTest, modifier = Modifier.fillMaxWidth()) {
                     Text("Test another commitment", color = Forest, fontWeight = FontWeight.Bold)
                 }
