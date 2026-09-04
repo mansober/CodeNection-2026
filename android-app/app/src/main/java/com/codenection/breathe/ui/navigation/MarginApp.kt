@@ -3,6 +3,7 @@ package com.codenection.breathe.ui
 import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
@@ -43,6 +44,7 @@ fun MarginApp() {
     var previousName by rememberSaveable { mutableStateOf(AppScreen.Welcome.name) }
     var nudgeThreshold by rememberSaveable { mutableStateOf("90%") }
     var editingCommitmentName by rememberSaveable { mutableStateOf<String?>(null) }
+    var feelQuestionIndex by rememberSaveable { mutableIntStateOf(0) }
     val commitments = remember { mutableStateListOf<Commitment>().also { it.addAll(sampleCommitments) } }
     val selectedRoutineIds = remember { mutableStateListOf("classes") }
     val routineEntries = remember {
@@ -73,7 +75,14 @@ fun MarginApp() {
             when (screen) {
                 AppScreen.RoutineChecklist -> AppScreen.Welcome
                 AppScreen.RoutineHours -> AppScreen.RoutineChecklist
-                AppScreen.FeelQuestions -> AppScreen.RoutineHours
+                AppScreen.FeelQuestions -> {
+                    if (feelQuestionIndex > 0) {
+                        feelQuestionIndex -= 1
+                        AppScreen.FeelQuestions
+                    } else {
+                        AppScreen.RoutineHours
+                    }
+                }
                 AppScreen.SetupChoice -> AppScreen.FeelQuestions
                 AppScreen.ImportTimetable,
                 AppScreen.AddOnboarding -> AppScreen.SetupChoice
@@ -116,14 +125,19 @@ fun MarginApp() {
             entries = routineEntries,
             onEntryChange = { id, entry -> routineEntries[id] = entry },
             onBack = { navigate(AppScreen.RoutineChecklist) },
-            onContinue = { navigate(AppScreen.FeelQuestions) },
+            onContinue = {
+                feelQuestionIndex = 0
+                navigate(AppScreen.FeelQuestions)
+            },
         )
         AppScreen.FeelQuestions -> FeelQuestionsScreen(
             entries = routineEntries.filterKeys { it in selectedRoutineIds },
             answers = feelAnswers,
             recoveryChoice = recoveryChoice,
+            currentIndex = feelQuestionIndex,
             onAnswer = { kind, answer -> feelAnswers[kind] = answer },
             onRecovery = { recoveryChoice = it },
+            onIndexChange = { feelQuestionIndex = it },
             onBack = { navigate(AppScreen.RoutineHours) },
             onContinue = { navigate(AppScreen.SetupChoice) },
         )
@@ -160,10 +174,6 @@ fun MarginApp() {
             onRebalance = { navigate(AppScreen.FiveD) },
             onSeeAll = { navigate(AppScreen.See) },
             onTest = { navigate(AppScreen.TestCommitment) },
-            onAdd = {
-                editingCommitmentName = null
-                navigate(AppScreen.Add)
-            },
         )
         AppScreen.Add -> AddTabScreen(
             initialCommitment = commitments.firstOrNull { it.name == editingCommitmentName },

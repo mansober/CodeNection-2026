@@ -26,6 +26,14 @@ class OnboardingModelTest {
         assertFalse(shouldAskFeelQuestion(classesAndStudy, CapacityKind.Social))
         assertTrue(shouldAskFeelQuestion(listOf("sport"), CapacityKind.Physical))
         assertTrue(shouldAskFeelQuestion(listOf("club"), CapacityKind.Social))
+        assertEquals(
+            listOf(CapacityKind.Mental, CapacityKind.Time),
+            requiredFeelKinds(classesAndStudy),
+        )
+        assertEquals(
+            listOf(CapacityKind.Mental, CapacityKind.Physical, CapacityKind.Social, CapacityKind.Time),
+            requiredFeelKinds(listOf("classes", "sport", "club")),
+        )
     }
 
     @Test

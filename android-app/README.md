@@ -29,7 +29,7 @@ The debug APK is generated at `app/build/outputs/apk/debug/app-debug.apk`.
 1. Welcome
 2. Normal-week checklist
 3. Hours per selected routine item
-4. Conditional feel questions and recovery target
+4. Adaptive personal-limit questions, one question per page
 5. Specific-commitment chooser
 6. Timetable import
 7. Add one commitment during onboarding
@@ -54,12 +54,16 @@ completion actions instead of duplicating the tab bar.
 - Classes / lectures starts selected; only selected activities receive hour rows.
 - Mental and Time feel questions always appear. Physical and Social appear only when
   a selected activity has a weight of at least 0.4 in that dimension.
+- Every personal-limit dimension and the recovery target has its own page, with
+  progress and back navigation that preserve prior answers.
 - Errands & chores load Time and Physical in the four-bar model.
 - Timetable contradictions update the baseline visibly, retain both values, and can
   be undone.
 - The optional free-text parser can add or flag information but never overwrite the
   structured baseline.
 - Hypothetical commitments stay separate until explicitly confirmed.
+- Plan is the single place to add a confirmed commitment; Today does not duplicate
+  the same Add action.
 - Primary touch targets are at least 48dp and status meaning is never color-only.
 
 ## Project structure

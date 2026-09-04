@@ -22,6 +22,7 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -54,10 +55,10 @@ import com.codenection.breathe.RoutineItem
 import com.codenection.breathe.TimetableReconciliation
 import com.codenection.breathe.committedHoursTotal
 import com.codenection.breathe.recoveryHourValues
+import com.codenection.breathe.requiredFeelKinds
 import com.codenection.breathe.routineCatalog
 import com.codenection.breathe.routineDurationOptions
 import com.codenection.breathe.routineFrequencyOptions
-import com.codenection.breathe.shouldAskFeelQuestion
 import com.codenection.breathe.spareHourValues
 import com.codenection.breathe.ui.theme.Canvas
 import com.codenection.breathe.ui.theme.Coral
@@ -281,56 +282,91 @@ fun FeelQuestionsScreen(
     entries: Map<String, RoutineEntry>,
     answers: Map<CapacityKind, Int>,
     recoveryChoice: Int?,
+    currentIndex: Int,
     onAnswer: (CapacityKind, Int) -> Unit,
     onRecovery: (Int) -> Unit,
+    onIndexChange: (Int) -> Unit,
     onBack: () -> Unit,
     onContinue: () -> Unit,
 ) {
-    val selectedIds = entries.keys
-    val requiredKinds = listOf(
-        CapacityKind.Mental,
-        CapacityKind.Physical,
-        CapacityKind.Social,
-        CapacityKind.Time,
-    ).filter { shouldAskFeelQuestion(selectedIds, it) }
-    val ready = requiredKinds.all(answers::containsKey) && recoveryChoice != null
+    val requiredKinds = requiredFeelKinds(entries.keys)
+    val totalPages = requiredKinds.size + 1
+    val pageIndex = currentIndex.coerceIn(0, totalPages - 1)
+    val currentKind = requiredKinds.getOrNull(pageIndex)
+    val isRecoveryPage = currentKind == null
+    val pageReady = if (currentKind != null) answers.containsKey(currentKind) else recoveryChoice != null
+    val scrollState = rememberScrollState()
+
+    LaunchedEffect(pageIndex) { scrollState.scrollTo(0) }
 
     Scaffold(containerColor = Canvas) { padding ->
-        Column(Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState())) {
+        Column(Modifier.fillMaxSize().padding(padding).verticalScroll(scrollState)) {
             PageHeader(
-                "Your baseline · 3 of 3",
-                "How heavily does that sit on you?",
-                "These answers set personal limits. They are boundaries, not grades.",
-                onBack,
+                "Personal limit ${pageIndex + 1} of $totalPages",
+                if (isRecoveryPage) "How much room helps you recover?" else "How does a normal week leave you?",
+                "One question at a time, based on the commitments you just entered.",
+                onBack = {
+                    if (pageIndex > 0) onIndexChange(pageIndex - 1) else onBack()
+                },
             )
-            Column(Modifier.padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                requiredKinds.forEach { kind ->
+            Column(Modifier.padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
+                LinearProgressIndicator(
+                    progress = { (pageIndex + 1).toFloat() / totalPages.toFloat() },
+                    modifier = Modifier.fillMaxWidth().height(6.dp),
+                    color = currentKind?.color ?: Forest,
+                    trackColor = OutlineSoft,
+                    drawStopIndicator = {},
+                )
+                if (currentKind != null) {
                     FeelQuestionCard(
-                        kind = kind,
-                        question = feelQuestion(kind, entries),
-                        selected = answers[kind],
-                        onSelect = { onAnswer(kind, it) },
+                        kind = currentKind,
+                        question = feelQuestion(currentKind, entries),
+                        selected = answers[currentKind],
+                        onSelect = { onAnswer(currentKind, it) },
                     )
-                }
-                Surface(color = Mint, shape = RoundedCornerShape(10.dp)) {
-                    Column(Modifier.padding(15.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Text("How much completely unplanned time do you need in a week to feel okay?", fontWeight = FontWeight.Bold)
-                        listOf("A couple of hours", "Half a day", "A full day", "More than a day").forEachIndexed { index, label ->
-                            ChoicePill(
-                                "$label · ${recoveryHourValues[index]} h",
-                                recoveryChoice == index,
-                                { onRecovery(index) },
-                                Modifier.fillMaxWidth(),
+                } else {
+                    Surface(color = Mint, shape = RoundedCornerShape(10.dp), modifier = Modifier.fillMaxWidth()) {
+                        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Text("RECOVERY", color = Forest, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                            Text(
+                                "How much completely unplanned time do you need in a week to feel okay?",
+                                fontWeight = FontWeight.SemiBold,
+                                lineHeight = 22.sp,
                             )
+                            listOf("A couple of hours", "Half a day", "A full day", "More than a day").forEachIndexed { index, label ->
+                                ChoicePill(
+                                    "$label · ${recoveryHourValues[index]} h",
+                                    recoveryChoice == index,
+                                    { onRecovery(index) },
+                                    Modifier.fillMaxWidth(),
+                                )
+                            }
                         }
                     }
                 }
-                Text(
-                    "The calibration numbers are team-set starting points; we will tune them with student testing.",
-                    color = TextMuted,
-                    fontSize = 12.sp,
+                if (isRecoveryPage) {
+                    Text(
+                        "The calibration numbers are team-set starting points; we will tune them with student testing.",
+                        color = TextMuted,
+                        fontSize = 12.sp,
+                    )
+                }
+                PrimaryButton(
+                    text = if (isRecoveryPage) "Set my baseline" else "Next question",
+                    onClick = {
+                        if (isRecoveryPage) onContinue() else onIndexChange(pageIndex + 1)
+                    },
+                    enabled = pageReady,
                 )
-                PrimaryButton("Set my baseline", onContinue, enabled = ready)
+                if (!isRecoveryPage) {
+                    Text(
+                        "Your answer sets your personal limit for ${currentKind.label.lowercase()} load.",
+                        color = TextMuted,
+                        fontSize = 12.sp,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
                 Spacer(Modifier.height(24.dp))
             }
         }
@@ -370,8 +406,8 @@ private fun FeelQuestionCard(
             "Plenty · ${spareHourValues[3]} h",
         )
     }
-    Surface(color = Paper, shape = RoundedCornerShape(10.dp), border = BorderStroke(1.dp, OutlineSoft)) {
-        Column(Modifier.padding(15.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
+    Surface(color = Paper, shape = RoundedCornerShape(12.dp), border = BorderStroke(1.dp, OutlineSoft), modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Text(kind.label.uppercase(), color = kind.color, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
             Text(question, fontWeight = FontWeight.SemiBold, lineHeight = 21.sp)
             options.forEachIndexed { index, label ->

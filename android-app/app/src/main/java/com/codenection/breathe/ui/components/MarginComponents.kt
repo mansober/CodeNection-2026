@@ -54,6 +54,7 @@ import com.codenection.breathe.ui.theme.Mint
 import com.codenection.breathe.ui.theme.OutlineSoft
 import com.codenection.breathe.ui.theme.OutlineStrong
 import com.codenection.breathe.ui.theme.Paper
+import com.codenection.breathe.ui.theme.SoftMint
 import com.codenection.breathe.ui.theme.SoftCoral
 import com.codenection.breathe.ui.theme.TextMuted
 
@@ -89,7 +90,12 @@ fun PageHeader(
                     Text("‹  Back", color = Ink, fontWeight = FontWeight.Medium)
                 }
             } else {
-                MarginMark(Modifier.size(24.dp))
+                Box(
+                    modifier = Modifier.size(34.dp).background(SoftMint, RoundedCornerShape(9.dp)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    MarginMark(Modifier.size(21.dp))
+                }
                 Spacer(Modifier.width(10.dp))
             }
             Text(
@@ -266,10 +272,10 @@ enum class MainTab(val label: String) {
 
 @Composable
 fun AppBottomBar(selected: MainTab, onSelect: (MainTab) -> Unit) {
-    Box(Modifier.fillMaxWidth().background(Canvas).padding(horizontal = 20.dp, vertical = 8.dp)) {
-        Surface(color = Paper, shape = RoundedCornerShape(18.dp), border = BorderStroke(1.dp, OutlineSoft)) {
+    Box(Modifier.fillMaxWidth().background(Canvas).padding(horizontal = 20.dp, vertical = 7.dp)) {
+        Surface(color = Paper, shape = RoundedCornerShape(16.dp), border = BorderStroke(1.dp, OutlineSoft)) {
             Row(
-                modifier = Modifier.fillMaxWidth().height(64.dp).padding(horizontal = 6.dp),
+                modifier = Modifier.fillMaxWidth().height(70.dp).padding(horizontal = 6.dp),
                 horizontalArrangement = Arrangement.SpaceAround,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -278,23 +284,28 @@ fun AppBottomBar(selected: MainTab, onSelect: (MainTab) -> Unit) {
                     Column(
                         modifier = Modifier
                             .weight(1f)
-                            .height(56.dp)
+                            .height(62.dp)
                             .selectable(selected = isSelected, role = Role.Tab) { onSelect(tab) }
-                            .padding(vertical = 5.dp),
+                            .padding(vertical = 4.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center,
+                        verticalArrangement = Arrangement.SpaceBetween,
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(width = 50.dp, height = 29.dp)
-                                .background(if (isSelected) Mint else Color.Transparent, RoundedCornerShape(11.dp)),
-                            contentAlignment = Alignment.Center,
-                        ) { NavGlyph(tab, if (isSelected) Forest else TextMuted) }
+                        Surface(
+                            modifier = Modifier.size(width = 52.dp, height = 34.dp),
+                            color = if (isSelected) Mint else Canvas,
+                            shape = RoundedCornerShape(10.dp),
+                            border = BorderStroke(1.dp, if (isSelected) Forest.copy(alpha = .22f) else OutlineSoft),
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                NavGlyph(tab, if (isSelected) Forest else TextMuted)
+                            }
+                        }
                         Text(
                             tab.label,
                             color = if (isSelected) Forest else TextMuted,
-                            fontSize = 10.sp,
+                            fontSize = 11.sp,
                             fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                            lineHeight = 13.sp,
                         )
                     }
                 }
@@ -305,8 +316,8 @@ fun AppBottomBar(selected: MainTab, onSelect: (MainTab) -> Unit) {
 
 @Composable
 private fun NavGlyph(tab: MainTab, color: Color) {
-    DrawCanvas(Modifier.size(22.dp).clearAndSetSemantics { }) {
-        val sw = 1.8.dp.toPx()
+    DrawCanvas(Modifier.size(20.dp).clearAndSetSemantics { }) {
+        val sw = 1.7.dp.toPx()
         val line = Stroke(width = sw, cap = StrokeCap.Round, join = StrokeJoin.Round)
         when (tab) {
             MainTab.Today -> {

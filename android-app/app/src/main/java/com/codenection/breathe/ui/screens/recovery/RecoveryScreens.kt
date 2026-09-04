@@ -3,6 +3,7 @@ package com.codenection.breathe.ui
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -62,36 +64,56 @@ import com.codenection.breathe.ui.theme.Violet
 fun CheckInScreen(onTab: (MainTab) -> Unit, onSaved: () -> Unit) {
     var stress by remember { mutableIntStateOf(2) }
     var note by remember { mutableStateOf("") }
+    val stressLabels = listOf("Low", "Steady", "Heavy", "High", "Too much")
     val causes = listOf("Deadlines", "Sleep", "Money", "Conflict", "Too many plans")
     var selectedCauses by remember { mutableStateOf(setOf("Deadlines", "Too many plans")) }
 
     Scaffold(containerColor = CanvasColor, bottomBar = { AppBottomBar(MainTab.CheckIn, onTab) }) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState())) {
             PageHeader("Check-in", "How are you holding up?", "A quick check helps the plan fit the person.")
-            Column(Modifier.padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
+            Column(Modifier.padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 SectionLabel("Stress right now")
-                Surface(color = Paper, shape = RoundedCornerShape(16.dp), border = BorderStroke(1.dp, OutlineSoft)) {
-                    Row(Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 18.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                        listOf("Low", "Steady", "Heavy", "High", "Too much").forEachIndexed { index, label ->
-                            StressChoice(label, index, stress == index) { stress = index }
+                Surface(color = Paper, shape = RoundedCornerShape(14.dp), border = BorderStroke(1.dp, OutlineSoft)) {
+                    Row(
+                        Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        stressLabels.forEachIndexed { index, label ->
+                            StressChoice(label, index, stress == index, Modifier.weight(1f)) { stress = index }
                         }
                     }
                 }
+                Text(
+                    "${stressLabels[stress]} stress · ${selectedCauses.size} ${if (selectedCauses.size == 1) "cause" else "causes"} selected",
+                    color = TextMuted,
+                    fontSize = 12.sp,
+                )
                 SectionLabel("What is feeding it?")
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    causes.chunked(3).forEach { row ->
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            row.forEach { cause ->
-                                ChoicePill(
-                                    text = cause,
-                                    selected = cause in selectedCauses,
-                                    onClick = {
-                                        selectedCauses = if (cause in selectedCauses) selectedCauses - cause else selectedCauses + cause
-                                    },
-                                    modifier = Modifier.weight(1f),
-                                )
+                    causes.chunked(2).forEach { row ->
+                        if (row.size == 1) {
+                            val cause = row.single()
+                            ChoicePill(
+                                text = cause,
+                                selected = cause in selectedCauses,
+                                onClick = {
+                                    selectedCauses = if (cause in selectedCauses) selectedCauses - cause else selectedCauses + cause
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                        } else {
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                row.forEach { cause ->
+                                    ChoicePill(
+                                        text = cause,
+                                        selected = cause in selectedCauses,
+                                        onClick = {
+                                            selectedCauses = if (cause in selectedCauses) selectedCauses - cause else selectedCauses + cause
+                                        },
+                                        modifier = Modifier.weight(1f),
+                                    )
+                                }
                             }
-                            repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
                         }
                     }
                 }
@@ -105,9 +127,9 @@ fun CheckInScreen(onTab: (MainTab) -> Unit, onSaved: () -> Unit) {
                 )
                 Surface(color = Mint, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth()) {
                     Column(Modifier.padding(17.dp)) {
-                        Text("Based on this check-in", fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                        Text("Based on this check-in", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                         Spacer(Modifier.height(4.dp))
-                        Text("We will lower your suggested weekly limit.", color = TextMuted)
+                        Text("We will lower your suggested weekly limit.", color = TextMuted, fontSize = 14.sp, lineHeight = 20.sp)
                     }
                 }
                 PrimaryButton("Save check-in", onSaved)
@@ -118,7 +140,7 @@ fun CheckInScreen(onTab: (MainTab) -> Unit, onSaved: () -> Unit) {
 }
 
 @Composable
-private fun StressChoice(label: String, index: Int, selected: Boolean, onClick: () -> Unit) {
+private fun StressChoice(label: String, index: Int, selected: Boolean, modifier: Modifier = Modifier, onClick: () -> Unit) {
     val color = when (index) {
         0 -> Forest
         1 -> TextMuted
@@ -127,16 +149,19 @@ private fun StressChoice(label: String, index: Int, selected: Boolean, onClick: 
         else -> Color(0xFFB54132)
     }
     Column(
-        modifier = Modifier.size(width = 60.dp, height = 72.dp).clickable(role = Role.RadioButton, onClick = onClick)
+        modifier = modifier.height(88.dp).selectable(selected = selected, role = Role.RadioButton, onClick = onClick)
             .semantics { contentDescription = "$label stress${if (selected) ", selected" else ""}" },
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween,
     ) {
         Box(
-            Modifier.size(if (selected) 42.dp else 36.dp).background(color.copy(alpha = .14f), CircleShape),
+            Modifier
+                .size(40.dp)
+                .background(color.copy(alpha = if (selected) .18f else .10f), CircleShape)
+                .border(1.dp, if (selected) color else OutlineSoft, CircleShape),
             contentAlignment = Alignment.Center,
         ) {
-            Canvas(Modifier.size(25.dp)) {
+            Canvas(Modifier.size(23.dp)) {
                 val sw = 1.8.dp.toPx()
                 drawCircle(color, radius = size.minDimension * .42f, style = Stroke(sw))
                 drawCircle(color, radius = 1.2.dp.toPx(), center = Offset(size.width * .38f, size.height * .42f))
@@ -144,7 +169,16 @@ private fun StressChoice(label: String, index: Int, selected: Boolean, onClick: 
                 drawArc(color, if (index < 2) 20f else 205f, 140f, false, Offset(size.width * .31f, size.height * .52f), size.copy(width = size.width * .38f, height = size.height * .22f), style = Stroke(sw, cap = StrokeCap.Round))
             }
         }
-        Text(label, color = if (selected) Ink else TextMuted, fontSize = 9.sp, fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal, textAlign = TextAlign.Center)
+        Text(
+            label,
+            color = if (selected) Ink else TextMuted,
+            fontSize = 11.sp,
+            lineHeight = 13.sp,
+            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+            textAlign = TextAlign.Center,
+            minLines = 2,
+            maxLines = 2,
+        )
     }
 }
 
@@ -196,14 +230,61 @@ private fun RecoveryOption(title: String, body: String, color: Color, selected: 
         border = BorderStroke(1.dp, if (selected) Forest else OutlineSoft),
     ) {
         Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(44.dp).background(color.copy(alpha = .15f), RoundedCornerShape(10.dp)), contentAlignment = Alignment.Center) {
-                Box(Modifier.size(13.dp).background(color, CircleShape))
+            Box(
+                Modifier.size(48.dp).background(color.copy(alpha = .15f), RoundedCornerShape(11.dp)),
+                contentAlignment = Alignment.Center,
+            ) {
+                RecoveryGlyph(title, color)
             }
             Column(Modifier.weight(1f).padding(horizontal = 14.dp)) {
                 Text(title, fontWeight = FontWeight.Bold)
                 Text(body, color = TextMuted, fontSize = 13.sp)
             }
             Text(if (selected) "Added" else "Add", color = Forest, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+        }
+    }
+}
+
+@Composable
+private fun RecoveryGlyph(title: String, color: Color) {
+    Canvas(Modifier.size(24.dp)) {
+        val sw = 1.8.dp.toPx()
+        val stroke = Stroke(width = sw, cap = StrokeCap.Round)
+        when (title) {
+            "Protect tonight" -> {
+                drawRect(
+                    color = color,
+                    topLeft = Offset(size.width * .16f, size.height * .24f),
+                    size = size.copy(width = size.width * .68f, height = size.height * .60f),
+                    style = stroke,
+                )
+                drawLine(color, Offset(size.width * .16f, size.height * .42f), Offset(size.width * .84f, size.height * .42f), sw)
+                drawLine(color, Offset(size.width * .34f, size.height * .16f), Offset(size.width * .34f, size.height * .32f), sw)
+                drawLine(color, Offset(size.width * .66f, size.height * .16f), Offset(size.width * .66f, size.height * .32f), sw)
+            }
+            "Ask for company" -> {
+                drawCircle(color, radius = size.minDimension * .14f, center = Offset(size.width * .5f, size.height * .34f), style = stroke)
+                drawArc(
+                    color = color,
+                    startAngle = 200f,
+                    sweepAngle = 140f,
+                    useCenter = false,
+                    topLeft = Offset(size.width * .18f, size.height * .48f),
+                    size = size.copy(width = size.width * .64f, height = size.height * .48f),
+                    style = stroke,
+                )
+            }
+            else -> {
+                drawRect(
+                    color = color,
+                    topLeft = Offset(size.width * .20f, size.height * .12f),
+                    size = size.copy(width = size.width * .60f, height = size.height * .76f),
+                    style = stroke,
+                )
+                listOf(.35f, .50f, .65f).forEach { y ->
+                    drawLine(color, Offset(size.width * .32f, size.height * y), Offset(size.width * .68f, size.height * y), sw)
+                }
+            }
         }
     }
 }

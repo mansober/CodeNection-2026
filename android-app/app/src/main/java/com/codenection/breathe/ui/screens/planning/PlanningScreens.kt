@@ -65,7 +65,6 @@ fun HomeScreen(
     onRebalance: () -> Unit,
     onSeeAll: () -> Unit,
     onTest: () -> Unit,
-    onAdd: () -> Unit,
 ) {
     Scaffold(containerColor = Canvas, bottomBar = { AppBottomBar(MainTab.Today, onTab) }) { padding ->
         Column(
@@ -73,15 +72,10 @@ fun HomeScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Spacer(Modifier.height(10.dp))
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Column {
-                    Text("Good morning", color = TextMuted, style = MaterialTheme.typography.bodyMedium)
-                    Text("How full is this week?", style = MaterialTheme.typography.headlineMedium)
-                    Text("Sample week · Sep 7–13", color = TextMuted, fontSize = 11.sp, fontWeight = FontWeight.Medium)
-                }
-                TextButton(onClick = onAdd, modifier = Modifier.heightIn(min = 48.dp)) {
-                    Text("Add", color = Forest, fontWeight = FontWeight.Bold)
-                }
+            Column {
+                Text("Good morning", color = TextMuted, style = MaterialTheme.typography.bodyMedium)
+                Text("How full is this week?", style = MaterialTheme.typography.headlineMedium)
+                Text("Sample week · Sep 7–13", color = TextMuted, fontSize = 11.sp, fontWeight = FontWeight.Medium)
             }
             OverallLoadPanel(onRebalance)
             Column(verticalArrangement = Arrangement.spacedBy(15.dp)) {

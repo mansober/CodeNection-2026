@@ -3,6 +3,13 @@
 CodeNection is a full-stack workspace with an Expo/React Native client, a
 FastAPI backend, and PostgreSQL for persistence.
 
+## Which mobile project should I open?
+
+- `app/` is the existing Expo + React Native client. Run it with Expo/Metro.
+- `android-app/` is the native Kotlin + Jetpack Compose Margin judging prototype. Open this directory directly in Android Studio.
+
+They are separate build roots because Expo expects `app/package.json`, while Android Studio expects a Gradle root with `settings.gradle.kts`. Nesting either project inside the other would make dependency resolution and generated build files harder to manage. The current Android MVP work is intentionally scoped to `android-app/`; the Expo client has not been deleted or silently replaced.
+
 ## Repository layout
 
 ```text
@@ -38,8 +45,6 @@ resolve the app manifest from that directory. The requested source layout is
 under `app/src`.
 
 The complete Android judging prototype lives in [`android-app`](android-app/README.md).
-It is intentionally isolated from the Expo client so Android Studio can open a
-clean Gradle project without treating the full-stack repository as an Android module.
 
 ## Quick start
 

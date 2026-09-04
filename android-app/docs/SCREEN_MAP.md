@@ -7,7 +7,7 @@ This is the parity checklist for the product handoffs, Figma board, and Android 
 | 01 | Welcome | Explain the promise and start | `Welcome` |
 | 02 | Normal-week checklist | Produce `ticked_items[]` | `RoutineChecklist` |
 | 03 | Hours per item | Produce weekly hours and total | `RoutineHours` |
-| 04 | Feel questions | Set personal limits and recovery target | `FeelQuestions` |
+| 04a–e | Adaptive personal limits | Ask one relevant dimension per page, then recovery | `FeelQuestions` |
 | 05 | Commitment chooser | Import, add one at a time, or skip | `SetupChoice` |
 | 06 | Import timetable | Reconcile fixed class hours visibly | `ImportTimetable` |
 | 07 | Add during setup | Add one named commitment | `AddOnboarding` |
@@ -30,3 +30,5 @@ This is the parity checklist for the product handoffs, Figma board, and Android 
 - **Recover** → `Recovery`
 
 Add, 5D, simulator, onboarding, and confirmation screens are focused tasks and do not repeat the navigation bar.
+
+Confirmed commitments have one canonical Add entry point in **Plan**. Today links to Plan instead of repeating the same Add action.

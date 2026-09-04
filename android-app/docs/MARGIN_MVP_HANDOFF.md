@@ -11,7 +11,7 @@
   check-in, recovery, rebalancing, commitment testing, and confirmation.
 - Four capacity dimensions: Time, Mental, Physical, and Social.
 - Routine-baseline model with the eleven activity weights supplied in the product handoff.
-- Conditional Physical and Social questions based on a 0.4 weight threshold.
+- One personal-limit question per page, with conditional Physical and Social pages based on a 0.4 weight threshold.
 - Student-set utilisation, spare-time, and recovery calibration inputs.
 - Two named-commitment paths after baseline: timetable import or one-at-a-time entry.
 - Optional free text is additive-only and fully skippable.
@@ -20,6 +20,7 @@
 - Functional what-if simulator; hypothetical commitments remain separate until confirmed.
 - Today / Plan / Check-in / Recover navigation and a rebalanced-week success state.
 - Locally bundled IBM Plex Sans, accessible contrast, semantic labels, and 48dp+ primary controls.
+- One canonical confirmed-commitment Add action in Plan, bounded vector tiles, and an equal-column Check-in scale with 11sp labels.
 
 ## Important files
 
@@ -64,7 +65,7 @@ APK: `app/build/outputs/apk/debug/app-debug.apk`
 
 ## Verification evidence
 
-- `docs/screenshots/final/` contains all seventeen milestone screens plus distinct import error, loading, and success captures.
+- `docs/screenshots/final/` contains all seventeen route milestones, the adaptive Physical/Social/Time/Recovery subpages, and distinct import error, loading, and success captures.
 - The emulator walkthrough covers both optional conditional questions and the Classes-only path where Physical and Social are absent.
 - The what-if walkthrough confirms Weekend Hackathon is added to Plan only after **Add anyway**.
 - Timetable reconciliation was checked at 10 → 18 class hours, including undo and restore.

@@ -15,6 +15,8 @@ Each weekly hour is multiplied by the activity's Time, Mental, Physical, and Soc
 
 Mental and Time are always asked. Physical and Social are asked only when at least one selected activity has a weight of 0.4 or more in that dimension. A skipped dimension receives a neutral default in the downstream engine.
 
+Each required dimension appears on its own page. The final recovery-target question also has its own page. Back navigation moves through those pages without losing answers, and changing the normal-week selection rebuilds the required page sequence.
+
 The four subjective options map to utilisation values `0.55 / 0.70 / 0.90 / 1.05`. Time uses spare-hour choices `2 / 5 / 11 / 18`. Weekly unplanned recovery uses `3 / 5 / 9 / 14` hours.
 
 These values are calibrated team defaults. They should be tuned against real student weeks and must not be described as validated clinical thresholds.

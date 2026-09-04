@@ -92,6 +92,13 @@ fun shouldAskFeelQuestion(selectedIds: Collection<String>, kind: CapacityKind): 
         .any { it.weights.forKind(kind) >= 0.4 }
 }
 
+fun requiredFeelKinds(selectedIds: Collection<String>): List<CapacityKind> = listOf(
+    CapacityKind.Mental,
+    CapacityKind.Physical,
+    CapacityKind.Social,
+    CapacityKind.Time,
+).filter { shouldAskFeelQuestion(selectedIds, it) }
+
 fun inferredLimit(load: Double, answerIndex: Int): Double {
     val utilisation = utilisationValues[answerIndex.coerceIn(utilisationValues.indices)]
     return if (utilisation == 0.0) 0.0 else load / utilisation

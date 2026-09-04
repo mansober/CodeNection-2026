@@ -25,8 +25,10 @@ Margin is a decision tool for highly involved university students. It should fee
 
 - Every visible control works in the prototype, including editing and removing confirmed commitments.
 - Today, Plan, Check-in, and Recover form the persistent navigation. Focused task and success screens omit it.
-- Onboarding separates the recurring baseline from named commitments: checklist → hours → conditional feel questions → import/manual choice.
+- Onboarding separates the recurring baseline from named commitments: checklist → hours → one adaptive personal-limit question per page → import/manual choice.
 - Physical and Social feel questions are skipped when the selected routine does not meaningfully load that dimension.
+- Confirmed commitments are added from Plan, avoiding two competing Add actions on Today and Plan.
+- Canvas icons sit inside consistent bounded tiles so their stroke paths cannot appear clipped or visually detached.
 - Imported timetable corrections are explicit and undoable; optional free text can never silently replace structured answers.
 - Hypothetical commitments remain outside the week unless “Add anyway” is chosen.
 - Empty, loading, and recoverable error states live in the relevant workflow.
