@@ -1,56 +1,31 @@
-# Welcome to your Expo app 👋
+# Margin app
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+This directory is the complete Margin frontend. It uses Expo SDK 57, React Native, Expo Router, and TypeScript to serve Android, iOS, and web from the same codebase.
 
-## Get started
+## Start here
 
-1. Install dependencies
-
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```powershell
+cd "C:\Users\User\OneDrive\Documents\DEGREE\Projects\CodeNection-2026\app"
+npm install
+npx expo start
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Press `a` for Android or `w` for web. On a physical Android or iPhone, open Expo Go and scan the QR code. The iOS Simulator requires macOS.
 
-### Other setup steps
+## Quality checks
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+```powershell
+npm run check
+npm run export:web
+```
 
-## Learn more
+`npm run check` performs TypeScript and Expo lint checks. The source is organised by responsibility under `src/`; platform artwork and IBM Plex Sans are under `assets/`.
 
-To learn more about developing your project with Expo, look at the following resources:
+## Key implementation rules
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- `src/app/` contains only Expo Router entry points.
+- `src/features/margin/MarginApp.tsx` owns the prototype flow and state.
+- shared controls and the vector system live in `src/components/`.
+- no operating-system emoticon glyphs are used for Check-in states.
+- visible UI text is 13px or larger and primary touch targets are at least 48dp.
+- hypothetical commitments are not saved until the user explicitly confirms them.

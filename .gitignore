@@ -67,10 +67,8 @@ app/ios/*.xcworkspace/xcuserdata/
 app/ios/*.xcodeproj/xcuserdata/
 *.xcarchive
 
-# Native Android local/IDE state
-android-app/.gradle/
-android-app/local.properties
-android-app/gradle/gradle-daemon-jvm.properties
+# Local caches from the removed native Android prototype
+android-app/
 
 # Python
 __pycache__/

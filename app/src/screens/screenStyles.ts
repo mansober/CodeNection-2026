@@ -1,0 +1,35 @@
+import { StyleSheet } from "react-native";
+
+import { colors, fonts, layout, type } from "@/theme/tokens";
+
+export const screenStyles = StyleSheet.create({
+  content: { paddingHorizontal: layout.pagePadding, gap: 16 },
+  contentTight: { paddingHorizontal: layout.pagePadding, gap: 10 },
+  spacer: { height: 12 },
+  largeSpacer: { height: 28 },
+  row: { flexDirection: "row", alignItems: "center", gap: 10 },
+  rowBetween: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 },
+  wrapRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  flex: { flex: 1 },
+  body: { ...type.body, color: colors.ink },
+  bodyMuted: { ...type.body, color: colors.textMuted },
+  bodySmall: { ...type.bodySmall, color: colors.ink },
+  bodySmallMuted: { ...type.bodySmall, color: colors.textMuted },
+  caption: { ...type.caption, color: colors.textMuted },
+  label: { ...type.label, color: colors.ink },
+  eyebrow: { ...type.eyebrow, color: colors.textMuted },
+  title: { ...type.h2, color: colors.ink },
+  whiteTitle: { ...type.h2, color: colors.white },
+  whiteBody: { ...type.bodySmall, color: colors.mint },
+  divider: { height: 1, backgroundColor: colors.outlineSoft },
+  linkButton: { minHeight: 48, alignItems: "center", justifyContent: "center", paddingHorizontal: 12 },
+  linkText: { ...type.label, color: colors.forest, textAlign: "center" },
+  softRule: { borderTopWidth: 1, borderColor: colors.outlineSoft, paddingTop: 14 },
+  iconTile: { width: 48, height: 48, borderRadius: 11, alignItems: "center", justifyContent: "center", flexShrink: 0 },
+  optionCard: { minHeight: 88, borderWidth: 1, borderColor: colors.outlineSoft, borderRadius: 13, backgroundColor: colors.paper, padding: 15, flexDirection: "row", alignItems: "center", gap: 14 },
+  optionNumber: { ...type.eyebrow, color: colors.forest },
+  optionTitle: { ...type.h3, color: colors.ink },
+  optionBody: { ...type.bodySmall, color: colors.textMuted, marginTop: 3 },
+  badge: { minHeight: 30, borderRadius: 8, paddingHorizontal: 10, alignItems: "center", justifyContent: "center", backgroundColor: colors.softMint },
+  badgeText: { fontFamily: fonts.semiBold, fontSize: 13, lineHeight: 16, color: colors.forest, textTransform: "uppercase" },
+});

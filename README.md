@@ -1,101 +1,70 @@
-# CodeNection 2026
+# Margin — CodeNection 2026
 
-CodeNection is a full-stack workspace with an Expo/React Native client, a
-FastAPI backend, and PostgreSQL for persistence.
+Margin is a cross-platform capacity planner for university students. It helps students see how time, mental, physical, and social load interact, then rebalance a difficult week before overload becomes burnout.
 
-## Which mobile project should I open?
-
-- `app/` is the existing Expo + React Native client. Run it with Expo/Metro.
-- `android-app/` is the native Kotlin + Jetpack Compose Margin judging prototype. Open this directory directly in Android Studio.
-
-They are separate build roots because Expo expects `app/package.json`, while Android Studio expects a Gradle root with `settings.gradle.kts`. Nesting either project inside the other would make dependency resolution and generated build files harder to manage. The current Android MVP work is intentionally scoped to `android-app/`; the Expo client has not been deleted or silently replaced.
+The active frontend is one Expo + React Native + TypeScript project. The same source runs on Android, iOS, and web.
 
 ## Repository layout
 
 ```text
 app/
+  assets/                 # Margin fonts and platform artwork
+  scripts/                # Repeatable brand-asset generator
   src/
-    app/             # Expo Router screens and routes
-    components/      # Reusable UI components
-    hooks/           # Shared React hooks
-    lib/api.ts       # Typed API client
-    types/           # Shared frontend types
-  package.json       # Expo project manifest
-android-app/
-  app/               # Native Android Margin prototype
-  docs/              # Product, screen-map, design, and verification notes
-  gradle/             # Gradle wrapper support
-backend/
-  app/
-    main.py          # FastAPI application entry point
-    api/             # HTTP routers
-    models/          # SQLAlchemy models
-    schemas/         # Pydantic request/response schemas
-    services/        # Application services
-    db/              # Database engine, sessions, and base model
-    core/            # Settings and cross-cutting configuration
-  migrations/        # Alembic migrations
-  pyproject.toml
-  uv.lock
-compose.yaml          # Local PostgreSQL + backend services
+    app/                  # Expo Router entry points
+    components/           # Accessible shared UI and SVG icons
+    features/margin/      # App-level state and navigation flow
+    models/               # Capacity and commitment models
+    screens/              # Onboarding, planning, rebalance, recovery
+    theme/                # Typography, colour, and spacing tokens
+backend/                  # FastAPI service and database layer
+compose.yaml              # Local backend and PostgreSQL services
 ```
 
-`app/package.json` stays at the Expo project root because Expo, Metro, and npm
-resolve the app manifest from that directory. The requested source layout is
-under `app/src`.
+There is no second native Android frontend. Run every client platform from `app/`.
 
-The complete Android judging prototype lives in [`android-app`](android-app/README.md).
+## Run the app
 
-## Quick start
+```powershell
+cd "C:\Users\User\OneDrive\Documents\DEGREE\Projects\CodeNection-2026\app"
+npm install
+npx expo start
+```
 
-### Start the backend and database
+From the Expo terminal:
 
-From the repository root:
+- press `a` for an Android emulator or connected Android phone;
+- press `w` for the web app;
+- scan the QR code with Expo Go for a physical Android or iPhone;
+- press `i` for the iOS simulator on macOS.
 
-```bash
+Useful direct commands:
+
+```powershell
+npm run android
+npm run web
+npm run ios      # macOS only for the iOS Simulator
+npm run check
+```
+
+For Android, start a virtual device in Android Studio’s Device Manager first. Android Studio does not need a separate Gradle project for the Expo Go workflow.
+
+## Product flow
+
+- one-question-per-page baseline limits derived from normal commitments;
+- timetable import with idle, loading, error, success, and undo states;
+- Today dashboard across four capacity dimensions;
+- commitment plan with one clear Add action and explicit edit/remove controls;
+- editable rebalance recommendations and a separated what-if simulator;
+- check-in and recovery flows with accessible custom vectors;
+- 48dp+ touch targets, IBM Plex Sans, and 13px-or-larger visible UI text.
+
+## Backend
+
+Start the API and PostgreSQL from the repository root:
+
+```powershell
 docker compose up --build
 ```
 
-The API is available at <http://localhost:8000>. OpenAPI documentation is at
-<http://localhost:8000/docs>, and the health endpoint is
-<http://localhost:8000/health>.
-
-### Start the mobile/web app
-
-```bash
-cd app
-npm install
-npm run start
-```
-
-Set `EXPO_PUBLIC_API_URL` when the API is not reachable at the default
-`http://localhost:8000`:
-
-```bash
-# Android emulator
-EXPO_PUBLIC_API_URL=http://10.0.2.2:8000 npm run android
-
-# A physical device (replace with the computer's LAN IP)
-EXPO_PUBLIC_API_URL=http://192.168.1.10:8000 npm run start
-```
-
-On Windows PowerShell, use `$env:EXPO_PUBLIC_API_URL = "http://10.0.2.2:8000"`
-before starting Expo.
-
-## Backend development without Docker
-
-```bash
-cd backend
-uv sync
-uv run uvicorn app.main:app --reload
-```
-
-Database migrations are managed with Alembic:
-
-```bash
-uv run alembic upgrade head
-uv run alembic revision --autogenerate -m "describe change"
-```
-
-Copy `.env.example` to `.env` if you need local configuration overrides. Do
-not commit real credentials or generated build artifacts.
+The API is available at `http://localhost:8000`, with OpenAPI documentation at `http://localhost:8000/docs`.
