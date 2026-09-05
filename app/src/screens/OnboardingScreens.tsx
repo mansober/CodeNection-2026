@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import * as DocumentPicker from "expo-document-picker";
 
 import {
   AppButton,
@@ -28,6 +29,7 @@ import {
   frequencyOptions,
   recoveryHourValues,
   requiredFeelKinds,
+  routineConditionOptions,
   RoutineEntry,
   routineCatalog,
   spareHourValues,
@@ -82,10 +84,10 @@ export function RoutineChecklistScreen({ selectedIds, onToggle, onBack, onContin
 
 export function RoutineHoursScreen({ selectedIds, entries, onEntryChange, onBack, onContinue }: { selectedIds: string[]; entries: Record<string, RoutineEntry>; onEntryChange: (id: string, entry: RoutineEntry) => void; onBack: () => void; onContinue: () => void }) {
   const selectedItems = routineCatalog.filter((item) => selectedIds.includes(item.id));
-  const total = selectedItems.reduce((sum, item) => sum + weeklyHours(entries[item.id] ?? { durationHours: 1, timesPerWeek: 1 }), 0);
+  const total = selectedItems.reduce((sum, item) => sum + weeklyHours(entries[item.id] ?? { durationHours: 1, timesPerWeek: 1, condition: "Typical" }), 0);
 
   const adjust = (id: string, key: "durationHours" | "timesPerWeek", direction: -1 | 1) => {
-    const current = entries[id] ?? { durationHours: 1, timesPerWeek: 1 };
+    const current = entries[id] ?? { durationHours: 1, timesPerWeek: 1, condition: "Typical" };
     const options = key === "durationHours" ? durationOptions.map((entry) => entry[1]) : frequencyOptions.map((entry) => entry[1]);
     const index = Math.max(0, options.indexOf(current[key] as never));
     const nextIndex = Math.min(options.length - 1, Math.max(0, index + direction));
@@ -97,7 +99,7 @@ export function RoutineHoursScreen({ selectedIds, entries, onEntryChange, onBack
       <PageHeader eyebrow="Your baseline · 2 of 3" title="How much of each?" body="Use a normal week rather than your busiest week." onBack={onBack} />
       <View style={s.content}>
         {selectedItems.map((item) => {
-          const entry = entries[item.id] ?? { durationHours: 1, timesPerWeek: 1 };
+          const entry = entries[item.id] ?? { durationHours: 1, timesPerWeek: 1, condition: "Typical" };
           return (
             <Card key={item.id}>
               <View style={s.rowBetween}>
@@ -106,6 +108,7 @@ export function RoutineHoursScreen({ selectedIds, entries, onEntryChange, onBack
               </View>
               <CompactStepper label="Length each time" value={durationOptions.find((option) => option[1] === entry.durationHours)?.[0] ?? "1 hr"} onDecrease={() => adjust(item.id, "durationHours", -1)} onIncrease={() => adjust(item.id, "durationHours", 1)} />
               <CompactStepper label="Times each week" value={frequencyOptions.find((option) => option[1] === entry.timesPerWeek)?.[0] ?? "Once"} onDecrease={() => adjust(item.id, "timesPerWeek", -1)} onIncrease={() => adjust(item.id, "timesPerWeek", 1)} />
+              <SegmentedChoices label="How does this usually feel?" choices={routineConditionOptions} selected={entry.condition} onSelect={(condition) => onEntryChange(item.id, { ...entry, condition: condition as RoutineEntry["condition"] })} />
             </Card>
           );
         })}
@@ -142,7 +145,7 @@ export function FeelQuestionsScreen({ selectedIds, entries, answers, recoveryCho
 
   return (
     <ScrollPage>
-      <PageHeader eyebrow={`Personal limit ${pageIndex + 1} of ${total}`} title={isRecovery ? "How much room helps you recover?" : "How does a normal week leave you?"} body="One question at a time, based on the commitments you entered." onBack={back} />
+      <PageHeader eyebrow={`Personal limit ${pageIndex + 1} of ${total}`} title={isRecovery ? "How much room helps you recover?" : "How does a normal week leave you?"} body={`${selectedIds.length} recurring ${selectedIds.length === 1 ? "schedule" : "schedules"} gave you ${total} short questions. One question appears per page.`} onBack={back} />
       <View style={s.content}>
         <ProgressBar current={pageIndex + 1} total={total} color={kind ? capacityMeta[kind].color : colors.forest} />
         {kind ? (
@@ -211,7 +214,22 @@ export function ImportTimetableScreen({ originalHours, onClassHoursChanged, onBa
     return () => clearTimeout(timer);
   }, [state, onClassHoursChanged]);
 
-  const startImport = () => setState(filename.trim() ? "loading" : "error");
+  const startImport = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({ type: ["image/png", "image/jpeg", "text/calendar"], copyToCacheDirectory: true });
+      if (result.canceled) return;
+      const pickedName = result.assets[0]?.name ?? "";
+      if (!/\.(png|jpe?g|ics)$/i.test(pickedName)) {
+        setFilename(pickedName);
+        setState("error");
+        return;
+      }
+      setFilename(pickedName);
+      setState("loading");
+    } catch {
+      setState("error");
+    }
+  };
   const useDemo = () => { setFilename("semester-timetable.png"); setState("loading"); };
   const toggleApplied = () => {
     const next = !applied;
@@ -226,10 +244,10 @@ export function ImportTimetableScreen({ originalHours, onClassHoursChanged, onBa
         <View style={styles.importPanel} accessibilityLiveRegion="polite">
           {state === "loading" ? <><ActivityIndicator color={colors.forest} size="large" /><Text style={s.label}>Reading your timetable…</Text></> : null}
           {state === "done" ? <><Text style={styles.importNumber}>6</Text><Text style={s.bodySmallMuted}>weekly classes found</Text></> : null}
-          {state === "error" ? <><Text style={[s.label, { color: colors.coral }]}>We could not read that file</Text><Text style={[s.bodySmallMuted, styles.center]}>Enter a file name or use the demo timetable.</Text></> : null}
+          {state === "error" ? <><Text style={[s.label, { color: colors.coral }]}>We could not read that file</Text><Text style={[s.bodySmallMuted, styles.center]}>Choose a PNG, JPG, or ICS file, or use the demo timetable.</Text></> : null}
           {state === "idle" ? <><MarginIcon name="calendar" color={colors.forest} size={34} /><Text style={s.eyebrow}>TIMETABLE FILE</Text><Text style={s.caption}>PNG, JPG, or ICS</Text></> : null}
         </View>
-        <FormField label="File name for prototype" value={filename} onChangeText={(value) => { setFilename(value); if (state === "error") setState("idle"); }} placeholder="semester-timetable.png" />
+        {filename ? <Card><Text style={s.eyebrow}>SELECTED FILE</Text><Text style={[s.label, { marginTop: 5 }]}>{filename}</Text></Card> : null}
         {state === "done" ? (
           <>
             <Card>
@@ -243,7 +261,7 @@ export function ImportTimetableScreen({ originalHours, onClassHoursChanged, onBa
           </>
         ) : (
           <>
-            <AppButton text={state === "error" ? "Try again" : "Read timetable"} onPress={startImport} disabled={state === "loading"} />
+            <AppButton text={state === "error" ? "Choose another file" : "Choose timetable file"} onPress={startImport} disabled={state === "loading"} />
             <AppButton text="Use demo timetable" variant="quiet" onPress={useDemo} disabled={state === "loading"} />
           </>
         )}
@@ -291,8 +309,8 @@ export function AddCommitmentOnboardingScreen({ onBack, onContinue }: { onBack: 
   return <CommitmentForm eyebrow="Add manually" title="Add one commitment" body="Add a named deadline, shift, event, or competition. Your routine is already counted." submitText="Add and continue" onBack={onBack} onSubmit={onContinue} />;
 }
 
-export function AnythingElseScreen({ onBack, onContinue }: { onBack: () => void; onContinue: () => void }) {
-  const [note, setNote] = useState("");
+export function AnythingElseScreen({ initialNote, onBack, onContinue }: { initialNote: string; onBack: () => void; onContinue: (note: string) => void }) {
+  const [note, setNote] = useState(initialNote);
   const [reviewed, setReviewed] = useState(false);
   return (
     <ScrollPage>
@@ -301,7 +319,7 @@ export function AnythingElseScreen({ onBack, onContinue }: { onBack: () => void;
         <FormField label="Weekly context" value={note} onChangeText={(value) => { setNote(value); setReviewed(false); }} placeholder="e.g. I help at home most Sunday mornings…" multiline />
         {reviewed ? <InlineNotice title="One addition to review" body="Sunday family duty · 2 hours suggested. Your baseline was not changed." /> : null}
         {note.trim() && !reviewed ? <AppButton text="Review this note" onPress={() => setReviewed(true)} /> : null}
-        <AppButton text="Continue to today" variant={reviewed || !note.trim() ? "primary" : "secondary"} onPress={onContinue} />
+        <AppButton text="Continue to dashboard" variant={reviewed || !note.trim() ? "primary" : "secondary"} onPress={() => onContinue(note.trim())} />
         <Text style={styles.centerCaption}>This step is optional; leaving it blank adds nothing.</Text>
       </View>
     </ScrollPage>

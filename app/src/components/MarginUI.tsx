@@ -255,9 +255,9 @@ export function CapacityBar({ value, compact = false }: { value: CapacityValue; 
 }
 
 const tabs: { key: MainTab; label: string; icon: IconName }[] = [
-  { key: "today", label: "Today", icon: "today" },
+  { key: "today", label: "Dashboard", icon: "today" },
   { key: "plan", label: "Plan", icon: "plan" },
-  { key: "check-in", label: "Check-in", icon: "check-in" },
+  { key: "distribution", label: "Load", icon: "distribution" },
   { key: "recovery", label: "Recover", icon: "recovery" },
 ];
 

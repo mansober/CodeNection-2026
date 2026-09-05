@@ -29,6 +29,17 @@ export type RoutineItem = {
 export type RoutineEntry = {
   durationHours: number;
   timesPerWeek: number;
+  condition: RoutineCondition;
+};
+
+export type RoutineCondition = "Light" | "Typical" | "Demanding";
+export type DashboardPeriod = "week" | "month";
+
+export type DailyCheckIn = {
+  stress: number;
+  causes: string[];
+  note: string;
+  savedAt: string;
 };
 
 export type AppScreen =
@@ -42,15 +53,15 @@ export type AppScreen =
   | "anything-else"
   | "today"
   | "plan"
+  | "distribution"
   | "add"
   | "rebalance"
   | "test-commitment"
   | "simulator"
-  | "check-in"
   | "recovery"
   | "rebalanced";
 
-export type MainTab = "today" | "plan" | "check-in" | "recovery";
+export type MainTab = "today" | "plan" | "distribution" | "recovery";
 
 export const capacityMeta: Record<CapacityKind, { label: string; color: string }> = {
   time: { label: "Time", color: "#0F6B4F" },
@@ -64,6 +75,13 @@ export const sampleCapacities: CapacityValue[] = [
   { kind: "mental", used: 88, limit: 100 },
   { kind: "physical", used: 72, limit: 100 },
   { kind: "social", used: 64, limit: 100 },
+];
+
+export const sampleMonthlyCapacities: CapacityValue[] = [
+  { kind: "time", used: 84, limit: 100 },
+  { kind: "mental", used: 79, limit: 100 },
+  { kind: "physical", used: 68, limit: 100 },
+  { kind: "social", used: 70, limit: 100 },
 ];
 
 export const routineCatalog: RoutineItem[] = [
@@ -101,6 +119,8 @@ export const frequencyOptions = [
   ["Every day", 7],
 ] as const;
 
+export const routineConditionOptions: RoutineCondition[] = ["Light", "Typical", "Demanding"];
+
 export const recoveryHourValues = [3, 5, 9, 14];
 export const spareHourValues = [2, 5, 11, 18];
 
@@ -125,12 +145,14 @@ export const weekendHackathon: Commitment = {
 };
 
 export function requiredFeelKinds(selectedIds: string[]): CapacityKind[] {
-  return (["mental", "physical", "social", "time"] as CapacityKind[]).filter((kind) => {
-    if (kind === "mental" || kind === "time") return true;
-    return routineCatalog
-      .filter((item) => selectedIds.includes(item.id))
-      .some((item) => item.weights[kind] >= 0.4);
-  });
+  const selected = routineCatalog.filter((item) => selectedIds.includes(item.id));
+  const extraQuestionCount = Math.min(2, Math.max(0, selected.length - 2));
+  const rankedExtras = (["physical", "social"] as CapacityKind[])
+    .map((kind) => ({ kind, weight: selected.reduce((sum, item) => sum + item.weights[kind], 0) }))
+    .sort((a, b) => b.weight - a.weight)
+    .slice(0, extraQuestionCount)
+    .map(({ kind }) => kind);
+  return ["mental", "time", ...rankedExtras];
 }
 
 export function weeklyHours(entry: RoutineEntry): number {
@@ -144,4 +166,34 @@ export function formatHours(value: number): string {
 export function createCommitmentId(name: string): string {
   const slug = name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
   return `${slug || "commitment"}-${Date.now()}`;
+}
+
+const dayAliases = [
+  ["monday", "mon"],
+  ["tuesday", "tue"],
+  ["wednesday", "wed"],
+  ["thursday", "thu"],
+  ["friday", "fri", "due friday"],
+  ["saturday", "sat"],
+  ["sunday", "sun"],
+] as const;
+
+export const commitmentDayLabels = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday", "Unscheduled"];
+
+export function commitmentDayIndex(schedule: string): number {
+  const normalized = schedule.toLowerCase();
+  const index = dayAliases.findIndex((aliases) => aliases.some((alias) => normalized.includes(alias)));
+  return index < 0 ? 7 : index;
+}
+
+export function commitmentLoadTotals(commitments: Commitment[]): Record<CapacityKind, number> {
+  return commitments.reduce<Record<CapacityKind, number>>(
+    (totals, item) => ({
+      time: totals.time + item.time,
+      mental: totals.mental + item.mental,
+      physical: totals.physical + item.physical,
+      social: totals.social + item.social,
+    }),
+    { time: 0, mental: 0, physical: 0, social: 0 },
+  );
 }

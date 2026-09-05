@@ -29,3 +29,5 @@ npm run export:web
 - no operating-system emoticon glyphs are used for Check-in states.
 - visible UI text is 13px or larger and primary touch targets are at least 48dp.
 - hypothetical commitments are not saved until the user explicitly confirms them.
+- the four persistent sections are Dashboard, Plan, Load, and Recover; daily Check-in is a focused popup rather than a duplicate navigation destination.
+- timetable selection uses Expo DocumentPicker so the same import entry point works on Android, iOS, and web.

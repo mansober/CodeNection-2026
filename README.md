@@ -51,13 +51,19 @@ For Android, start a virtual device in Android Studio’s Device Manager first. 
 
 ## Product flow
 
-- one-question-per-page baseline limits derived from normal commitments;
-- timetable import with idle, loading, error, success, and undo states;
-- Today dashboard across four capacity dimensions;
-- commitment plan with one clear Add action and explicit edit/remove controls;
+- recurring-schedule tickboxes, weekly frequency, duration, and a light/typical/demanding condition for every selected schedule;
+- an adaptive one-question-per-page baseline whose length follows the number and kind of normal commitments;
+- native timetable file selection on Android, iOS, and web, with loading, recoverable error, review, and undo states;
+- optional weekly context and irregular daily-update text inputs;
+- a week/month dashboard across time, mental, physical, and social capacity;
+- a daily check-in popup with readable custom stress vectors and recovery-safe behaviour;
+- commitment planning grouped chronologically by day, with one clear Add action and explicit edit/remove controls;
+- a four-category workload distribution chart with percentages and raw load totals;
+- recovery suggestions organised by day and matched to each day’s dominant load;
 - editable rebalance recommendations and a separated what-if simulator;
-- check-in and recovery flows with accessible custom vectors;
 - 48dp+ touch targets, IBM Plex Sans, and 13px-or-larger visible UI text.
+
+If Metro reports an `EINVAL ... readlink` error from a OneDrive-synced `node_modules` directory, clone the repository to a normal local folder outside OneDrive and run `npm install` there. This is a Windows/OneDrive filesystem issue rather than an app-code issue.
 
 ## Backend
 
