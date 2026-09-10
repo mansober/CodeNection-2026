@@ -12,6 +12,24 @@ npx expo start
 
 Press `a` for Android or `w` for web. On a physical Android or iPhone, open Expo Go and scan the QR code. The iOS Simulator requires macOS.
 
+Expo Go is only the fast development workflow. Margin is also configured as its own Android application with package ID `com.codenection.margin`. A standalone release embeds the JavaScript bundle and assets, so it runs without Expo Go and without a Metro server.
+
+## Standalone Android app
+
+Keep the repository as an Expo managed project. Generate the native Android project only when a local standalone build is needed:
+
+```powershell
+cd "C:\Users\User\OneDrive\Documents\DEGREE\Projects\CodeNection-2026\app"
+npm ci
+npx expo prebuild --platform android
+cd android
+.\gradlew.bat assembleRelease -PreactNativeArchitectures=x86_64
+```
+
+The APK is generated at `android/app/build/outputs/apk/release/app-release.apk`. Install that APK on an Android emulator or device to run Margin as an independent app. Use an architecture appropriate for the target device; `x86_64` is for the current Android Studio emulator.
+
+On Windows, use JDK 17 for the native build. If the repository is inside OneDrive or another deeply nested directory and CMake reports a path-length error, build from a short temporary copy such as `C:\m`; this does not change the source-of-truth project structure.
+
 ## Quality checks
 
 ```powershell

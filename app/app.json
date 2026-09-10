@@ -11,6 +11,7 @@
       "icon": "./assets/expo.icon"
     },
     "android": {
+      "package": "com.codenection.margin",
       "adaptiveIcon": {
         "backgroundColor": "#F8F7F2",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
