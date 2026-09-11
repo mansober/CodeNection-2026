@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
-import * as DocumentPicker from "expo-document-picker";
+import { useState } from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { DateField, ValueSlider } from "@/components/PlannerControls";
+import { dateKey, prettyDate } from "@/models/planner";
 
 import {
   AppButton,
@@ -9,7 +10,6 @@ import {
   ChoicePill,
   CompactStepper,
   FormField,
-  ImpactSelector,
   InlineNotice,
   MarginMark,
   PageHeader,
@@ -18,6 +18,7 @@ import {
   SectionLabel,
   SegmentedChoices,
 } from "@/components/MarginUI";
+import { ForestPool } from "@/components/ForestTheme";
 import { MarginIcon } from "@/components/MarginIcon";
 import {
   CapacityKind,
@@ -32,7 +33,6 @@ import {
   routineConditionOptions,
   RoutineEntry,
   routineCatalog,
-  spareHourValues,
   weeklyHours,
 } from "@/models/margin";
 import { colors, fonts, type } from "@/theme/tokens";
@@ -43,12 +43,12 @@ export function WelcomeScreen({ onStart }: { onStart: () => void }) {
     <ScrollPage contentStyle={styles.welcomePage}>
       <View style={styles.brandRow}>
         <MarginMark size={24} />
-        <Text style={styles.brandName}>MARGIN</Text>
+        <Text style={styles.brandName}>SANTAI</Text>
       </View>
       <View style={styles.welcomeHero}>
         <Text accessibilityRole="header" style={styles.display}>Know the cost{"\n"}before you say yes.</Text>
         <Text style={styles.lead}>A weekly capacity planner for classes, clubs, work, and the rest of your life.</Text>
-        <View style={styles.capacitySculpture} accessibilityLabel="Four capacity dimensions: Time, Mental, Physical and Social">
+        <ForestPool height={230} /><View style={styles.capacitySculpture} accessibilityLabel="Four capacity dimensions: Time, Mental, Physical and Social">
           {[
             ["T", colors.forest, 66],
             ["M", colors.coral, 92],
@@ -106,8 +106,9 @@ export function RoutineHoursScreen({ selectedIds, entries, onEntryChange, onBack
                 <Text style={[s.label, s.flex]}>{item.label}</Text>
                 <Text style={styles.hoursTotal}>{formatHours(weeklyHours(entry))} / week</Text>
               </View>
-              <CompactStepper label="Length each time" value={durationOptions.find((option) => option[1] === entry.durationHours)?.[0] ?? "1 hr"} onDecrease={() => adjust(item.id, "durationHours", -1)} onIncrease={() => adjust(item.id, "durationHours", 1)} />
-              <CompactStepper label="Times each week" value={frequencyOptions.find((option) => option[1] === entry.timesPerWeek)?.[0] ?? "Once"} onDecrease={() => adjust(item.id, "timesPerWeek", -1)} onIncrease={() => adjust(item.id, "timesPerWeek", 1)} />
+              <CompactStepper label={item.id === "classes" ? "Hours of classes on a class day" : "Hours spent on a typical active day"} value={formatHours(entry.durationHours)} onDecrease={() => adjust(item.id, "durationHours", -1)} onIncrease={() => adjust(item.id, "durationHours", 1)} />
+              <CompactStepper label={item.id === "classes" ? "Class days each week" : "Days each week you do this"} value={`${entry.timesPerWeek} ${entry.timesPerWeek === 1 ? "day" : "days"} / week`} onDecrease={() => adjust(item.id, "timesPerWeek", -1)} onIncrease={() => adjust(item.id, "timesPerWeek", 1)} />
+              <Text style={s.caption}>{formatHours(entry.durationHours)} per day × {entry.timesPerWeek} days = {formatHours(weeklyHours(entry))} per week</Text>
               <SegmentedChoices label="How does this usually feel?" choices={routineConditionOptions} selected={entry.condition} onSelect={(condition) => onEntryChange(item.id, { ...entry, condition: condition as RoutineEntry["condition"] })} />
             </Card>
           );
@@ -120,18 +121,18 @@ export function RoutineHoursScreen({ selectedIds, entries, onEntryChange, onBack
 }
 
 const feelOptions: Record<CapacityKind, string[]> = {
-  mental: ["Still sharp", "Fine—manageable", "Drained, but okay tomorrow", "Completely done"],
-  physical: ["Could do more", "Fine", "Sore and tired", "Wiped out for days"],
-  social: ["Energised", "Fine either way", "A bit worn out", "Need real alone time"],
-  time: spareHourValues.map((hours, index) => [`Almost none`, `A few hours`, `A decent amount`, `Plenty of room`][index] + ` · ${hours} h`),
+  mental: ["I can focus on another task", "I can manage one small task", "I need a break before focusing", "I cannot concentrate anymore"],
+  physical: ["I still have plenty of energy", "I can manage light activities", "I feel tired and need rest", "I need a full day to recover"],
+  social: ["I would enjoy more conversation", "A short catch-up feels comfortable", "I prefer a quiet evening alone", "I need a full day without social plans"],
+  time: ["Less than 30 minutes per day", "About 30–60 minutes per day", "About 1–2 hours per day", "More than 2 hours per day"],
 };
 
 function feelQuestion(kind: CapacityKind, entries: Record<string, RoutineEntry>) {
   const total = Object.values(entries).reduce((sum, entry) => sum + weeklyHours(entry), 0);
-  if (kind === "mental") return `After a normal ${formatHours(total)} week, how mentally clear are you?`;
-  if (kind === "physical") return "After your usual physical commitments, how does your body feel?";
-  if (kind === "social") return "After the usual amount of people-time, what do you have left?";
-  return "After everything is counted, how much usable time is normally left?";
+  if (kind === "mental") return `Your baseline includes ${formatHours(total)} of activities each week. At the end of a typical day in that week, how easy is it to concentrate?`;
+  if (kind === "physical") return "At the end of a typical day in your baseline routine, how much physical energy do you have left?";
+  if (kind === "social") return "After the conversations, classes and social plans in your normal week, how much more interaction feels comfortable?";
+  return "On a typical day in your baseline week, how much usable free time remains after commitments, sleep and everyday needs?";
 }
 
 export function FeelQuestionsScreen({ selectedIds, entries, answers, recoveryChoice, index, onAnswer, onRecovery, onIndexChange, onBack, onContinue }: { selectedIds: string[]; entries: Record<string, RoutineEntry>; answers: Partial<Record<CapacityKind, number>>; recoveryChoice?: number; index: number; onAnswer: (kind: CapacityKind, answer: number) => void; onRecovery: (answer: number) => void; onIndexChange: (index: number) => void; onBack: () => void; onContinue: () => void }) {
@@ -145,7 +146,7 @@ export function FeelQuestionsScreen({ selectedIds, entries, answers, recoveryCho
 
   return (
     <ScrollPage>
-      <PageHeader eyebrow={`Personal limit ${pageIndex + 1} of ${total}`} title={isRecovery ? "How much room helps you recover?" : "How does a normal week leave you?"} body={`${selectedIds.length} recurring ${selectedIds.length === 1 ? "schedule" : "schedules"} gave you ${total} short questions. One question appears per page.`} onBack={back} />
+      <PageHeader eyebrow={`Personal limit ${pageIndex + 1} of ${total}`} title={isRecovery ? "Room for recovery" : "Your energy after your routine"} body="Think about the normal week you just described in your baseline. Choose the answer that fits most days." onBack={back} />
       <View style={s.content}>
         <ProgressBar current={pageIndex + 1} total={total} color={kind ? capacityMeta[kind].color : colors.forest} />
         {kind ? (
@@ -196,113 +197,36 @@ export function SetupChoiceScreen({ onBack, onImport, onManual, onSkip }: { onBa
   );
 }
 
-type ImportState = "idle" | "loading" | "done" | "error";
-
-export function ImportTimetableScreen({ originalHours, onClassHoursChanged, onBack, onContinue }: { originalHours: number; onClassHoursChanged: (hours: number) => void; onBack: () => void; onContinue: () => void }) {
-  const [baselineOriginal] = useState(originalHours);
-  const [state, setState] = useState<ImportState>("idle");
-  const [filename, setFilename] = useState("");
-  const [applied, setApplied] = useState(true);
-
-  useEffect(() => {
-    if (state !== "loading") return;
-    const timer = setTimeout(() => {
-      setApplied(true);
-      onClassHoursChanged(18);
-      setState("done");
-    }, 750);
-    return () => clearTimeout(timer);
-  }, [state, onClassHoursChanged]);
-
-  const startImport = async () => {
-    try {
-      const result = await DocumentPicker.getDocumentAsync({ type: ["image/png", "image/jpeg", "text/calendar"], copyToCacheDirectory: true });
-      if (result.canceled) return;
-      const pickedName = result.assets[0]?.name ?? "";
-      if (!/\.(png|jpe?g|ics)$/i.test(pickedName)) {
-        setFilename(pickedName);
-        setState("error");
-        return;
-      }
-      setFilename(pickedName);
-      setState("loading");
-    } catch {
-      setState("error");
-    }
-  };
-  const useDemo = () => { setFilename("semester-timetable.png"); setState("loading"); };
-  const toggleApplied = () => {
-    const next = !applied;
-    setApplied(next);
-    onClassHoursChanged(next ? 18 : baselineOriginal);
-  };
-
-  return (
-    <ScrollPage>
-      <PageHeader eyebrow="Import timetable" title="Bring in fixed classes first" body="Use a PNG, JPG, or ICS timetable. You review every detected change." onBack={onBack} />
-      <View style={s.content}>
-        <View style={styles.importPanel} accessibilityLiveRegion="polite">
-          {state === "loading" ? <><ActivityIndicator color={colors.forest} size="large" /><Text style={s.label}>Reading your timetable…</Text></> : null}
-          {state === "done" ? <><Text style={styles.importNumber}>6</Text><Text style={s.bodySmallMuted}>weekly classes found</Text></> : null}
-          {state === "error" ? <><Text style={[s.label, { color: colors.coral }]}>We could not read that file</Text><Text style={[s.bodySmallMuted, styles.center]}>Choose a PNG, JPG, or ICS file, or use the demo timetable.</Text></> : null}
-          {state === "idle" ? <><MarginIcon name="calendar" color={colors.forest} size={34} /><Text style={s.eyebrow}>TIMETABLE FILE</Text><Text style={s.caption}>PNG, JPG, or ICS</Text></> : null}
-        </View>
-        {filename ? <Card><Text style={s.eyebrow}>SELECTED FILE</Text><Text style={[s.label, { marginTop: 5 }]}>{filename}</Text></Card> : null}
-        {state === "done" ? (
-          <>
-            <Card>
-              <Text style={s.eyebrow}>FOUND</Text>
-              <Text style={s.label}>Data Structures · 3 sessions</Text>
-              <Text style={s.label}>Artificial Intelligence · 3 sessions</Text>
-            </Card>
-            <InlineNotice title={applied ? `Classes updated from ${formatHours(baselineOriginal)} to 18 h` : `Classes restored to ${formatHours(baselineOriginal)}`} body="The original answer is retained, so this change is reversible." />
-            <AppButton text={applied ? "Undo timetable update" : "Use timetable hours"} variant="secondary" onPress={toggleApplied} />
-            <AppButton text="Continue to commitments" onPress={onContinue} />
-          </>
-        ) : (
-          <>
-            <AppButton text={state === "error" ? "Choose another file" : "Choose timetable file"} onPress={startImport} disabled={state === "loading"} />
-            <AppButton text="Use demo timetable" variant="quiet" onPress={useDemo} disabled={state === "loading"} />
-          </>
-        )}
-      </View>
-    </ScrollPage>
-  );
-}
+export { ImportTimetableScreen } from "./TimetableScreen";
 
 export type CommitmentDraft = Omit<Commitment, "id" | "time" | "mental" | "physical" | "social"> & { time: number; mental: number; physical: number; social: number };
 
-export function CommitmentForm({ eyebrow, title, body, initial, submitText, onBack, onSubmit, secondaryAction }: { eyebrow: string; title: string; body: string; initial?: Commitment; submitText: string; onBack: () => void; onSubmit: (commitment: Commitment) => void; secondaryAction?: { text: string; onPress: () => void } }) {
+export function CommitmentForm({ eyebrow, title, body, initial, submitText, onBack, onSubmit, secondaryAction, onAddAnother, defaultDate }: { eyebrow: string; title: string; body: string; initial?: Commitment; submitText: string; onBack: () => void; onSubmit: (commitment: Commitment) => void; secondaryAction?: { text: string; onPress: () => void }; onAddAnother?: (commitment: Commitment) => void; defaultDate?: string }) {
   const [name, setName] = useState(initial?.name ?? "");
-  const [category, setCategory] = useState(initial?.category ?? "Club");
+  const [category, setCategory] = useState(initial?.category ?? "Assignment");
   const [flexibility, setFlexibility] = useState(initial?.flexibility ?? "Somewhat flexible");
-  const [schedule, setSchedule] = useState(initial?.schedule ?? "This week");
-  const [impact, setImpact] = useState({
-    time: Math.max(1, Math.round((initial?.time ?? 12) / 5)),
-    mental: Math.max(1, Math.round((initial?.mental ?? 16) / 5)),
-    physical: Math.max(1, Math.round((initial?.physical ?? 8) / 5)),
-    social: Math.max(1, Math.round((initial?.social ?? 12) / 5)),
-  });
-  const submit = () => onSubmit({
-    id: initial?.id ?? createCommitmentId(name), name: name.trim(), category, schedule, flexibility,
-    time: impact.time * 5, mental: impact.mental * 5, physical: impact.physical * 5, social: impact.social * 5,
-  });
-
-  return (
-    <ScrollPage>
-      <PageHeader eyebrow={eyebrow} title={title} body={body} onBack={onBack} />
-      <View style={s.content}>
-        <FormField label="Commitment" value={name} onChangeText={setName} placeholder="e.g. Lab report" />
-        <SegmentedChoices label="Category" choices={["Class", "Club", "Job", "Sport", "Social"]} selected={category} onSelect={setCategory} />
-        <SegmentedChoices label="How locked in is it?" choices={["Fixed", "Somewhat flexible", "Flexible"]} selected={flexibility} onSelect={setFlexibility} />
-        <FormField label="When?" value={schedule} onChangeText={setSchedule} placeholder="Friday · 5:00 pm" />
-        <SectionLabel>How much will it draw on?</SectionLabel>
-        {(Object.keys(capacityMeta) as CapacityKind[]).map((kind) => <ImpactSelector key={kind} label={capacityMeta[kind].label} color={capacityMeta[kind].color} value={impact[kind]} onChange={(value) => setImpact((current) => ({ ...current, [kind]: value }))} />)}
-        {secondaryAction ? <AppButton text={secondaryAction.text} variant="secondary" onPress={secondaryAction.onPress} /> : null}
-        <AppButton text={submitText} disabled={!name.trim()} onPress={submit} />
-      </View>
-    </ScrollPage>
-  );
+  const [startDate, setStartDate] = useState(initial?.startDate ?? defaultDate ?? dateKey());
+  const [dueDate, setDueDate] = useState(initial?.dueDate ?? "");
+  const [duration, setDuration] = useState(initial?.durationHours ?? 1);
+  const [savedNotice, setSavedNotice] = useState("");
+  const [impact, setImpact] = useState({ mental: Math.min(5, Math.round((initial?.mental ?? 15) / 5)), physical: Math.min(5, Math.round((initial?.physical ?? 5) / 5)), social: Math.min(5, Math.round((initial?.social ?? 10) / 5)) });
+  const invalid = !name.trim() || !startDate || (!!dueDate && dueDate < startDate);
+  const draft = (): Commitment => ({ ...initial, id: initial?.id ?? createCommitmentId(name), name: name.trim(), category, startDate, dueDate: dueDate || undefined, schedule: prettyDate(startDate), flexibility, durationHours: duration, time: duration * 5, mental: impact.mental * 5, physical: impact.physical * 5, social: impact.social * 5 });
+  return <ScrollPage><PageHeader eyebrow={eyebrow} title={title} body={body} onBack={onBack} /><View style={s.content}>
+    {savedNotice ? <InlineNotice title="Commitment added" body={savedNotice} /> : null}
+    <FormField label="Commitment name" value={name} onChangeText={setName} placeholder="e.g. Lab report" />
+    <SegmentedChoices label="Category" choices={["Assignment", "Class", "Competition", "Club", "Job", "Sport", "Social", "Personal"]} selected={category} onSelect={setCategory} />
+    <SegmentedChoices label="Can the plan change?" choices={["Fixed", "Somewhat flexible", "Flexible"]} selected={flexibility} onSelect={setFlexibility} />
+    <DateField label="When will you do it?" value={startDate} onChange={setStartDate} />
+    <DateField label="Due date (optional)" value={dueDate} onChange={setDueDate} optional />
+    {dueDate && dueDate < startDate ? <Text accessibilityRole="alert" style={s.body}>Choose a due date on or after the start date.</Text> : null}
+    <ValueSlider label="Time needed" min={0.25} max={8} step={0.25} suffix=" hours" value={duration} onChange={setDuration} />
+    <SectionLabel>Energy needed</SectionLabel><Text style={s.bodySmallMuted}>0 = no effort · 5 = very demanding</Text>
+    {(["mental", "physical", "social"] as const).map(kind => <ValueSlider key={kind} label={kind === "social" ? "Social (effort spent interacting with others)" : capacityMeta[kind].label} value={impact[kind]} onChange={value => setImpact(current => ({ ...current, [kind]: value }))} />)}
+    <AppButton text={submitText} disabled={invalid} onPress={() => onSubmit(draft())} />
+    {!initial && onAddAnother ? <AppButton text="Add & add another commitment" variant="secondary" disabled={invalid} onPress={() => { onAddAnother(draft()); setSavedNotice(name.trim() + " is saved. Add your next commitment below."); setName(""); setDueDate(""); }} /> : null}
+    {secondaryAction ? <AppButton text={secondaryAction.text} variant="quiet" onPress={secondaryAction.onPress} /> : null}
+  </View></ScrollPage>;
 }
 
 export function AddCommitmentOnboardingScreen({ onBack, onContinue }: { onBack: () => void; onContinue: (commitment: Commitment) => void }) {
@@ -311,15 +235,12 @@ export function AddCommitmentOnboardingScreen({ onBack, onContinue }: { onBack: 
 
 export function AnythingElseScreen({ initialNote, onBack, onContinue }: { initialNote: string; onBack: () => void; onContinue: (note: string) => void }) {
   const [note, setNote] = useState(initialNote);
-  const [reviewed, setReviewed] = useState(false);
   return (
     <ScrollPage>
-      <PageHeader eyebrow="Optional context" title="Anything else about this week?" body="This note can flag a conflict, but it never changes your structured answers." onBack={onBack} />
+      <PageHeader eyebrow="Optional context" title="Anything else about this week?" body="Keep a note for yourself. You can add any extra plans through Add Commitment." onBack={onBack} />
       <View style={s.content}>
-        <FormField label="Weekly context" value={note} onChangeText={(value) => { setNote(value); setReviewed(false); }} placeholder="e.g. I help at home most Sunday mornings…" multiline />
-        {reviewed ? <InlineNotice title="One addition to review" body="Sunday family duty · 2 hours suggested. Your baseline was not changed." /> : null}
-        {note.trim() && !reviewed ? <AppButton text="Review this note" onPress={() => setReviewed(true)} /> : null}
-        <AppButton text="Continue to dashboard" variant={reviewed || !note.trim() ? "primary" : "secondary"} onPress={() => onContinue(note.trim())} />
+        <FormField label="Weekly context" value={note} onChangeText={setNote} placeholder="e.g. I help at home most Sunday mornings…" multiline />
+        <AppButton text="Build my plan" onPress={() => onContinue(note.trim())} />
         <Text style={styles.centerCaption}>This step is optional; leaving it blank adds nothing.</Text>
       </View>
     </ScrollPage>
@@ -329,14 +250,14 @@ export function AnythingElseScreen({ initialNote, onBack, onContinue }: { initia
 const styles = StyleSheet.create({
   welcomePage: { paddingHorizontal: 24, paddingTop: 22, paddingBottom: 24, justifyContent: "space-between", minHeight: 680 },
   brandRow: { flexDirection: "row", alignItems: "center", gap: 12 },
-  brandName: { ...type.eyebrow, color: colors.forest, letterSpacing: 2.3 },
-  welcomeHero: { gap: 18, marginVertical: 44 },
-  display: { ...type.display, color: colors.ink },
-  lead: { ...type.body, color: colors.textMuted, maxWidth: 420 },
+  brandName: { ...type.eyebrow, color: colors.white, letterSpacing: 2.3 },
+  welcomeHero: { gap: 18, marginVertical: 24 },
+  display: { ...type.display, color: colors.white },
+  lead: { ...type.body, color: colors.mint, maxWidth: 420 },
   capacitySculpture: { height: 108, flexDirection: "row", alignItems: "flex-end", gap: 7, marginTop: 12 },
   sculptureBar: { flex: 1, borderRadius: 5, padding: 9, justifyContent: "flex-end" },
   sculptureLabel: { fontFamily: fonts.bold, fontSize: 18 },
-  welcomeFooter: { gap: 12 },
+  welcomeFooter: { gap: 12, backgroundColor: colors.canvas, borderRadius: 22, padding: 18 },
   centerCaption: { ...type.caption, color: colors.textMuted, textAlign: "center" },
   hoursTotal: { ...type.label, color: colors.forest },
   question: { fontSize: 17, lineHeight: 23, marginTop: 8 },

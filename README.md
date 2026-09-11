@@ -1,6 +1,6 @@
-# Margin — CodeNection 2026
+# Santai — CodeNection 2026
 
-Margin is a cross-platform capacity planner for university students. It helps students see how time, mental, physical, and social load interact, then rebalance a difficult week before overload becomes burnout.
+Santai is a cross-platform capacity planner for university students. It helps students see how time, mental, physical, and social load interact, then rebalance a difficult week before overload becomes burnout.
 
 The active frontend is one Expo + React Native + TypeScript project. The same source runs on Android, iOS, and web.
 
@@ -8,7 +8,7 @@ The active frontend is one Expo + React Native + TypeScript project. The same so
 
 ```text
 app/
-  assets/                 # Margin fonts and platform artwork
+  assets/                 # Santai fonts and platform artwork
   scripts/                # Repeatable brand-asset generator
   src/
     app/                  # Expo Router entry points
@@ -51,17 +51,9 @@ For Android, start a virtual device in Android Studio’s Device Manager first. 
 
 ## Product flow
 
-- recurring-schedule tickboxes, weekly frequency, duration, and a light/typical/demanding condition for every selected schedule;
-- an adaptive one-question-per-page baseline whose length follows the number and kind of normal commitments;
-- native timetable file selection on Android, iOS, and web, with loading, recoverable error, review, and undo states;
-- optional weekly context and irregular daily-update text inputs;
-- a week/month dashboard across time, mental, physical, and social capacity;
-- a daily check-in popup with readable custom stress vectors and recovery-safe behaviour;
-- commitment planning grouped chronologically by day, with one clear Add action and explicit edit/remove controls;
-- a four-category workload distribution chart with percentages and raw load totals;
-- recovery suggestions organised by day and matched to each day’s dominant load;
-- editable rebalance recommendations and a separated what-if simulator;
-- 48dp+ touch targets, IBM Plex Sans, and 13px-or-larger visible UI text.
+The current functional prototype includes baseline setup, ICS module import and assignment dates, commitment calendars/sliders, a daily/weekly dashboard, energy and check-in streaks, daily assignment/training updates, per-item plan actions, a real what-if preview, load distribution, recovery feedback and a flashcard library.
+
+See [the full prototype handoff](app/PROTOTYPE.md) for the implemented checklist, theme adaptation and honest limits. New planner flows save locally; automatic image/PDF interpretation and AI weekly-note extraction are not connected.
 
 If Metro reports an `EINVAL ... readlink` error from a OneDrive-synced `node_modules` directory, clone the repository to a normal local folder outside OneDrive and run `npm install` there. This is a Windows/OneDrive filesystem issue rather than an app-code issue.
 

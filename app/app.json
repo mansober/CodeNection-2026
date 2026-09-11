@@ -1,19 +1,20 @@
 {
   "expo": {
-    "name": "Margin",
+    "name": "Santai",
     "slug": "margin-capacity",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "margin",
     "userInterfaceStyle": "light",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/images/icon.png"
     },
     "android": {
       "package": "com.codenection.margin",
+      "versionCode": 2,
       "adaptiveIcon": {
-        "backgroundColor": "#F8F7F2",
+        "backgroundColor": "#08261D",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
@@ -29,7 +30,7 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#F8F7F2",
+          "backgroundColor": "#08261D",
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }

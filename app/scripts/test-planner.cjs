@@ -1,0 +1,33 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const ts = require('typescript');
+const loaded = {};
+function load(name) {
+  if (loaded[name]) return loaded[name];
+  const filename = path.join(__dirname, '../src/models', name + '.ts');
+  const compiled = ts.transpileModule(fs.readFileSync(filename, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText;
+  const module = { exports: {} };
+  new Function('require', 'module', 'exports', compiled)(ref => load(ref.replace('./', '')), module, module.exports);
+  return loaded[name] = module.exports;
+}
+const p = load('planner');
+assert.equal(p.weekStart('2026-09-13'), '2026-09-07');
+assert.equal(p.shiftDate('2026-12-31', 1), '2027-01-01');
+const modules = p.parseTimetable('BEGIN:VCALENDAR\nBEGIN:VEVENT\nSUMMARY:Algorithms\nDTSTART:20260907T090000\nRRULE:FREQ=WEEKLY;BYDAY=MO,WE\nEND:VEVENT\nBEGIN:VEVENT\nSUMMARY:Algorithms\nDTSTART:20260911T090000\nEND:VEVENT\nEND:VCALENDAR');
+assert.equal(modules.length, 1);
+assert.deepEqual(modules[0].days.sort(), [1, 3, 5]);
+assert.deepEqual(p.parseTimetable('not a calendar'), []);
+const entries = { classes: { durationHours: 2, timesPerWeek: 5, condition: 'Typical' }, sport: { durationHours: 1, timesPerWeek: 1, condition: 'Typical' } };
+assert.equal(p.routinePlan(entries, modules, '2026-09-09').filter(i => i.routineId === 'classes').length, 1);
+assert.equal(p.routinePlan(entries, modules, '2026-09-08').filter(i => i.routineId === 'classes').length, 0);
+const check = { stress: 1, note: '', causes: [], savedAt: '2026-09-07T12:00:00', sportToday: false };
+assert.equal(p.routinePlan(entries, [], '2026-09-07', check).some(i => i.routineId === 'sport'), false);
+assert.equal(p.routinePlan(entries, [], '2026-09-07').some(i => i.routineId === 'sport'), true);
+assert.equal(p.routinePlan(entries, [], '2026-09-08', { ...check, savedAt: '2026-09-08T12:00:00', sportToday: true }).some(i => i.routineId === 'sport'), true);
+const light = p.routinePlan({ sport: { ...entries.sport, condition: 'Light' } }, [], '2026-09-07')[0];
+const heavy = p.routinePlan({ sport: { ...entries.sport, condition: 'Demanding' } }, [], '2026-09-07')[0];
+assert.ok(heavy.physical > light.physical);
+assert.equal(p.loadPercent(p.loadFor([], {})), 0);
+assert.equal(p.cardsFromText('Tree: A hierarchy\nNo delimiter\nQueue\tFirst in first out').length, 2);
+console.log('Planner model checks passed: dates, ICS module merge, routine days, daily gym override, condition weighting, empty load, flashcard extraction.');

@@ -16,6 +16,14 @@ export type Commitment = {
   mental: number;
   physical: number;
   social: number;
+  startDate?: string;
+  dueDate?: string;
+  moduleId?: string;
+  routineId?: string;
+  action?: string;
+  durationHours?: number;
+  originalDate?: string;
+  helper?: string;
 };
 
 export type LoadWeights = Record<CapacityKind, number>;
@@ -40,10 +48,14 @@ export type DailyCheckIn = {
   causes: string[];
   note: string;
   savedAt: string;
+  assignments?: Record<string, number>;
+  sportToday?: boolean;
 };
 
 export type AppScreen =
   | "welcome"
+  | "preparing"
+  | "flashcards"
   | "routine-checklist"
   | "routine-hours"
   | "feel-questions"

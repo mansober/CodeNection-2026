@@ -173,7 +173,7 @@ export function DistributionScreen({ commitments, onTab }: { commitments: Commit
 
   return (
     <ScrollPage bottomBar={<BottomNav selected="distribution" onSelect={onTab} />}>
-      <PageHeader eyebrow="Workload distribution" title="What is your week drawing on?" body="Each commitment contributes to all four capacities—not just the time it takes." />
+      <PageHeader eyebrow="Workload distribution" title="Your workload, by capacity" body="Each commitment contributes to all four capacities—not just the time it takes." />
       <View style={s.content}>
         <Card style={styles.chartCard}>
           <LoadDonut totals={totals} />
@@ -193,7 +193,7 @@ export function DistributionScreen({ commitments, onTab }: { commitments: Commit
         </Card>
         <Card tone={highest === "mental" ? "coral" : "mint"}>
           <Text style={s.eyebrow}>HIGHEST DRAW</Text>
-          <Text style={[s.title, { marginTop: 5 }]}>{capacityMeta[highest].label} needs the most margin.</Text>
+          <Text style={[s.title, { marginTop: 5 }]}>{commitments.length ? `${capacityMeta[highest].label} needs the most room.` : "No planned load in this view."}</Text>
           <Text style={[s.bodySmallMuted, { marginTop: 5 }]}>Distribution shows what kind of load dominates. Capacity bars on the dashboard show how close you are to your personal limit.</Text>
         </Card>
         <AppButton text="Review recovery for this load" onPress={() => onTab("recovery")} />
@@ -219,7 +219,7 @@ function LoadDonut({ totals }: { totals: Record<CapacityKind, number> }) {
           return <Circle key={kind} cx="100" cy="100" r={radius} fill="none" stroke={capacityMeta[kind].color} strokeWidth="28" strokeDasharray={`${Math.max(0, length - 3)} ${circumference}`} strokeDashoffset={offset} strokeLinecap="butt" transform="rotate(-90 100 100)" />;
         })}
       </Svg>
-      <View style={styles.chartCenter}><Text style={styles.chartNumber}>{total}</Text><Text style={styles.chartLabel}>TOTAL LOAD</Text></View>
+      <View style={styles.chartCenter}><Text style={styles.chartNumber}>{kinds.reduce((sum, kind) => sum + totals[kind], 0)}</Text><Text style={styles.chartLabel}>TOTAL LOAD</Text></View>
     </View>
   );
 }

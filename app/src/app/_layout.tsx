@@ -8,17 +8,16 @@ import { colors } from "@/theme/tokens";
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
-    "IBMPlexSans-Regular": require("../../assets/fonts/IBMPlexSans-Regular.ttf"),
-    "IBMPlexSans-Medium": require("../../assets/fonts/IBMPlexSans-Medium.ttf"),
-    "IBMPlexSans-SemiBold": require("../../assets/fonts/IBMPlexSans-SemiBold.ttf"),
-    "IBMPlexSans-Bold": require("../../assets/fonts/IBMPlexSans-Bold.ttf"),
+    DMSans: require("../../assets/fonts/dm-regular.ttf"),
+    DMSansBold: require("../../assets/fonts/dm-bold.ttf"),
+    SpaceGrotesk: require("../../assets/fonts/space-regular.ttf"),
   });
 
   if (!fontsLoaded) return <View style={styles.loading} />;
 
   return (
     <SafeAreaProvider>
-      <StatusBar style="dark" />
+      <StatusBar style="light" />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.canvas } }} />
     </SafeAreaProvider>
   );

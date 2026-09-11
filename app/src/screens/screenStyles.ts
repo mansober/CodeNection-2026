@@ -3,8 +3,8 @@ import { StyleSheet } from "react-native";
 import { colors, fonts, layout, type } from "@/theme/tokens";
 
 export const screenStyles = StyleSheet.create({
-  content: { paddingHorizontal: layout.pagePadding, gap: 16 },
-  contentTight: { paddingHorizontal: layout.pagePadding, gap: 10 },
+  content: { paddingHorizontal: layout.pagePadding, paddingTop: 24, paddingBottom: 32, gap: 16, backgroundColor: colors.canvas, borderTopLeftRadius: 30, borderTopRightRadius: 30, flexGrow: 1 },
+  contentTight: { paddingHorizontal: layout.pagePadding, paddingTop: 24, paddingBottom: 32, gap: 10, backgroundColor: colors.canvas, borderTopLeftRadius: 30, borderTopRightRadius: 30, flexGrow: 1 },
   spacer: { height: 12 },
   largeSpacer: { height: 28 },
   row: { flexDirection: "row", alignItems: "center", gap: 10 },

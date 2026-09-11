@@ -16,12 +16,13 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { capacityMeta, CapacityValue, MainTab } from "@/models/margin";
 import { colors, fonts, layout, type } from "@/theme/tokens";
+import { ForestBackdrop, ForestFloor, SantaiLogo } from "./ForestTheme";
 import { IconName, MarginIcon } from "@/components/MarginIcon";
 
 export function MarginMark({ light = false, size = 24 }: { light?: boolean; size?: number }) {
   return (
     <View style={[styles.mark, { width: size + 12, height: size + 12, backgroundColor: light ? "rgba(230,242,236,0.14)" : colors.softMint }]}>
-      <MarginIcon name="leaf" color={light ? colors.mint : colors.forest} size={size} />
+      <SantaiLogo size={size} light={light} />
     </View>
   );
 }
@@ -30,6 +31,7 @@ export function PageShell({ children, bottomBar }: PropsWithChildren<{ bottomBar
   return (
     <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
       <View style={styles.pageFrame}>
+        <ForestBackdrop />
         <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === "ios" ? "padding" : undefined}>
           {children}
         </KeyboardAvoidingView>
@@ -93,6 +95,7 @@ export function AppButton({ text, onPress, variant = "primary", disabled = false
     <Pressable
       accessibilityRole="button"
       accessibilityState={{ disabled }}
+      aria-disabled={disabled}
       disabled={disabled}
       onPress={onPress}
       style={({ pressed }) => [
@@ -145,6 +148,7 @@ export function ChoicePill({ text, selected, onPress, style }: { text: string; s
     <Pressable
       accessibilityRole="radio"
       accessibilityState={{ selected }}
+      aria-checked={selected}
       onPress={onPress}
       style={({ pressed }) => [styles.choice, selected && styles.choiceSelected, pressed && styles.pressed, style]}
     >
@@ -158,6 +162,7 @@ export function CheckboxRow({ label, selected, onPress }: { label: string; selec
     <Pressable
       accessibilityRole="checkbox"
       accessibilityState={{ checked: selected }}
+      aria-checked={selected}
       onPress={onPress}
       style={({ pressed }) => [styles.checkboxRow, selected && styles.checkboxRowSelected, pressed && styles.pressed]}
     >
@@ -212,6 +217,7 @@ export function ImpactSelector({ label, color, value, onChange }: { label: strin
             accessibilityRole="radio"
             accessibilityLabel={`${label} impact ${option} of 5`}
             accessibilityState={{ selected: option === value }}
+            aria-checked={option === value}
             onPress={() => onChange(option)}
             style={[styles.impactButton, option === value && { backgroundColor: color, borderColor: color }]}
           >
@@ -264,6 +270,7 @@ const tabs: { key: MainTab; label: string; icon: IconName }[] = [
 export function BottomNav({ selected, onSelect }: { selected: MainTab; onSelect: (tab: MainTab) => void }) {
   return (
     <View style={styles.navOuter}>
+      <ForestFloor />
       <View style={styles.navBar} accessibilityRole="tablist">
         {tabs.map((tab) => {
           const active = selected === tab.key;
@@ -272,11 +279,12 @@ export function BottomNav({ selected, onSelect }: { selected: MainTab; onSelect:
               key={tab.key}
               accessibilityRole="tab"
               accessibilityState={{ selected: active }}
+              aria-selected={active}
               onPress={() => onSelect(tab.key)}
               style={({ pressed }) => [styles.navItem, pressed && styles.pressed]}
             >
               <View style={[styles.navIconBox, active && styles.navIconBoxActive]}>
-                <MarginIcon name={tab.icon} color={active ? colors.forest : colors.textMuted} size={20} />
+                <MarginIcon name={tab.icon} color={active ? colors.forest : colors.mint} size={20} />
               </View>
               <Text style={[styles.navLabel, active && styles.navLabelActive]}>{tab.label}</Text>
             </Pressable>
@@ -306,25 +314,25 @@ export function InlineNotice({ title, body, tone = "mint" }: { title: string; bo
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  safeArea: { flex: 1, backgroundColor: colors.canvas },
-  pageFrame: { flex: 1, width: "100%", maxWidth: layout.pageMaxWidth, alignSelf: "center", backgroundColor: colors.canvas, ...layout.webShadow },
-  scrollContent: { flexGrow: 1, paddingBottom: 28 },
+  safeArea: { flex: 1, backgroundColor: colors.deepForest },
+  pageFrame: { flex: 1, width: "100%", maxWidth: layout.pageMaxWidth, alignSelf: "center", backgroundColor: colors.deepForest, ...layout.webShadow },
+  scrollContent: { flexGrow: 1, paddingBottom: 0 },
   mark: { borderRadius: 10, alignItems: "center", justifyContent: "center", flexShrink: 0 },
   header: { paddingHorizontal: layout.pagePadding, paddingTop: 14, paddingBottom: 24, gap: 8 },
   headerTopRow: { minHeight: 40, flexDirection: "row", alignItems: "center", gap: 10 },
   backButton: { minHeight: layout.touchTarget, minWidth: 72, justifyContent: "center" },
-  backText: { ...type.label, color: colors.ink },
-  eyebrow: { ...type.eyebrow, color: colors.textMuted, flexShrink: 1 },
-  pageTitle: { ...type.h1, color: colors.ink },
-  headerBody: { ...type.body, color: colors.textMuted, maxWidth: 440 },
+  backText: { ...type.label, color: colors.white },
+  eyebrow: { ...type.eyebrow, color: colors.mint, flexShrink: 1 },
+  pageTitle: { ...type.h1, color: colors.white },
+  headerBody: { ...type.body, color: colors.mint, maxWidth: 440 },
   pressed: { opacity: 0.72, transform: [{ scale: 0.99 }] },
-  button: { minHeight: 56, borderRadius: 12, paddingHorizontal: 18, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 9, borderWidth: 1 },
+  button: { minHeight: 56, borderRadius: 17, paddingHorizontal: 18, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 9, borderWidth: 1 },
   buttonPrimary: { backgroundColor: colors.forest, borderColor: colors.forest },
   buttonSecondary: { backgroundColor: colors.paper, borderColor: colors.outline },
   buttonQuiet: { backgroundColor: colors.softMint, borderColor: colors.softMint },
   buttonWarning: { backgroundColor: colors.softCoral, borderColor: colors.coral },
   buttonDisabled: { backgroundColor: colors.surfaceMuted, borderColor: colors.outlineSoft },
-  buttonText: { ...type.label, textAlign: "center" },
+  buttonText: { ...type.label, textAlign: "center", flexShrink: 1 },
   buttonTextPrimary: { color: colors.white },
   buttonTextSecondary: { color: colors.ink },
   buttonTextDisabled: { color: colors.textMuted },
@@ -377,13 +385,13 @@ const styles = StyleSheet.create({
   capacityTrack: { height: 9, borderRadius: 5, backgroundColor: colors.outlineSoft, overflow: "hidden" },
   capacityTrackCompact: { height: 7 },
   capacityFill: { height: "100%", borderRadius: 5 },
-  navOuter: { backgroundColor: colors.canvas, paddingHorizontal: 14, paddingTop: 6, paddingBottom: Platform.OS === "web" ? 12 : 4 },
-  navBar: { minHeight: 74, borderRadius: 17, borderWidth: 1, borderColor: colors.outlineSoft, backgroundColor: colors.paper, flexDirection: "row", paddingHorizontal: 5, paddingVertical: 5 },
+  navOuter: { backgroundColor: colors.deepForest, paddingHorizontal: 14, paddingTop: 16, paddingBottom: Platform.OS === "web" ? 12 : 4 },
+  navBar: { minHeight: 74, borderRadius: 17, borderWidth: 0, borderColor: colors.outlineSoft, backgroundColor: "transparent", flexDirection: "row", paddingHorizontal: 5, paddingVertical: 5 },
   navItem: { flex: 1, minHeight: 62, alignItems: "center", justifyContent: "space-between", paddingVertical: 4 },
-  navIconBox: { width: 52, height: 34, borderRadius: 10, borderWidth: 1, borderColor: colors.outlineSoft, backgroundColor: colors.canvas, alignItems: "center", justifyContent: "center" },
+  navIconBox: { width: 52, height: 34, borderRadius: 18, borderWidth: 0, borderColor: colors.outlineSoft, backgroundColor: "transparent", alignItems: "center", justifyContent: "center" },
   navIconBoxActive: { backgroundColor: colors.mint, borderColor: "rgba(15,107,79,0.25)" },
-  navLabel: { fontFamily: fonts.regular, fontSize: 13, lineHeight: 16, color: colors.textMuted },
-  navLabelActive: { fontFamily: fonts.semiBold, color: colors.forest },
+  navLabel: { fontFamily: fonts.regular, fontSize: 13, lineHeight: 18, color: colors.mint },
+  navLabelActive: { fontFamily: fonts.semiBold, color: colors.white },
   progressTrack: { height: 7, backgroundColor: colors.outlineSoft, borderRadius: 4, overflow: "hidden" },
   progressFill: { height: "100%", borderRadius: 4 },
   notice: { borderRadius: 12, padding: 16, gap: 4 },
