@@ -14,7 +14,7 @@ export const colors = {
   coral: "#A45F43",
   coralDark: "#8C4632",
   softCoral: "#F2E4D6",
-  amber: "#917537",
+  amber: "#82672B",
   softAmber: "#E8E5CF",
   blue: "#4E73B8",
   violet: "#6F67B6",
