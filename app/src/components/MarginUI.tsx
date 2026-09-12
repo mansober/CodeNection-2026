@@ -18,7 +18,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { MainTab, QuickAddAction } from "@/models/margin";
 import { colors, fonts, layout, type } from "@/theme/tokens";
-import { ForestBackdrop, ForestFloor, SantaiLogo } from "./ForestTheme";
+import { ForestBackdrop, ForestFloor, GRASS_HEIGHT, SantaiLogo } from "./ForestTheme";
 import { IconName, MarginIcon } from "@/components/MarginIcon";
 
 export function MarginMark({ light = false, size = 24 }: { light?: boolean; size?: number }) {
@@ -272,7 +272,7 @@ export function BottomNav({ selected, onSelect, onQuickAdd }: { selected: MainTa
         <ForestFloor />
         <View style={styles.navBar} accessibilityRole="tablist">
           {tabs.slice(0, 2).map(renderTab)}
-          <Pressable accessibilityRole="button" accessibilityLabel="Open add menu" accessibilityState={{ expanded: open }} onPress={() => setOpen(true)} style={({ pressed }) => [styles.addNavItem, pressed && styles.pressed]}><View style={styles.addNavButton}><MarginIcon name="plus" color={colors.soilDark} size={27} strokeWidth={2.3} /></View><Text style={styles.navLabelActive}>Add</Text></Pressable>
+          <Pressable accessibilityRole="button" accessibilityLabel="Open add menu" accessibilityState={{ expanded: open }} onPress={() => setOpen(true)} style={({ pressed }) => [styles.addNavItem, pressed && styles.pressed]}><View style={styles.addNavButton}><MarginIcon name="plus" color={colors.soilDark} size={22} strokeWidth={2.3} /></View><Text style={styles.navLabelActive}>Add</Text></Pressable>
           {tabs.slice(2).map(renderTab)}
         </View>
       </View>
@@ -376,15 +376,30 @@ const styles = StyleSheet.create({
   stepperControls: { flexDirection: "row", gap: 8 },
   stepperButton: { width: 48, height: 48, borderRadius: 10, borderWidth: 1, borderColor: colors.outlineSoft, backgroundColor: colors.softMint, alignItems: "center", justifyContent: "center" },
   stepperSymbol: { fontFamily: fonts.medium, fontSize: 24, lineHeight: 26, color: colors.forest },
-  navOuter: { backgroundColor: colors.soil, paddingHorizontal: 10, paddingTop: 16, paddingBottom: Platform.OS === "web" ? 12 : 4 },
-  navBar: { minHeight: 78, borderRadius: 17, borderWidth: 0, borderColor: colors.outlineSoft, backgroundColor: "transparent", flexDirection: "row", paddingHorizontal: 2, paddingVertical: 5 },
-  navItem: { flex: 1, minHeight: 62, alignItems: "center", justifyContent: "space-between", paddingVertical: 4 },
-  navIconBox: { width: 52, height: 34, borderRadius: 18, borderWidth: 0, borderColor: colors.outlineSoft, backgroundColor: "transparent", alignItems: "center", justifyContent: "center" },
-  navIconBoxActive: { backgroundColor: colors.mint, borderColor: "rgba(15,107,79,0.25)" },
+  // paddingTop is the grass band, so the icons always begin just below it.
+  navOuter: { backgroundColor: colors.soil, paddingHorizontal: 10, paddingTop: GRASS_HEIGHT, paddingBottom: Platform.OS === "web" ? 1 : 0 },
+  // navItem stays at 48 — the project's accessibility floor for touch targets — so the
+  // cut below the grass comes out of the surrounding padding, not the tap area itself.
+  navBar: { minHeight: 50, borderRadius: 17, borderWidth: 0, borderColor: colors.outlineSoft, backgroundColor: "transparent", flexDirection: "row", paddingHorizontal: 2, paddingVertical: 1 },
+  navItem: { flex: 1, minHeight: 48, alignItems: "center", justifyContent: "space-between", paddingVertical: 1 },
+  navIconBox: { width: 52, height: 26, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+  navIconBoxActive: {
+    backgroundColor: "rgba(255,255,255,0.18)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.38)",
+    shadowColor: colors.white,
+    shadowOpacity: 0.35,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 3,
+    ...Platform.select({ web: { backdropFilter: "blur(6px)" } as object, default: {} }),
+  },
   navLabel: { fontFamily: fonts.regular, fontSize: 12, lineHeight: 18, color: colors.white },
   navLabelActive: { fontFamily: fonts.semiBold, color: colors.white },
-  addNavItem: { flex: 1, minHeight: 66, alignItems: "center", justifyContent: "space-between", marginTop: -19, paddingBottom: 4 },
-  addNavButton: { width: 58, height: 58, borderRadius: 29, backgroundColor: colors.leaf, borderWidth: 4, borderColor: colors.paper, alignItems: "center", justifyContent: "center" },
+  // addNavButton stays at 48 — the accessibility floor — so it, not the surrounding
+  // item, sets the row's minimum height; that's what was keeping the bar tall.
+  addNavItem: { flex: 1, minHeight: 42, alignItems: "center", justifyContent: "space-between", marginTop: -18, paddingBottom: 1 },
+  addNavButton: { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.leaf, borderWidth: 3, borderColor: colors.paper, alignItems: "center", justifyContent: "center" },
   quickAddSheet: { width: "100%", maxWidth: layout.pageMaxWidth, alignSelf: "center", backgroundColor: colors.canvas, borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingHorizontal: 20, paddingTop: 10, paddingBottom: 24, gap: 10 },
   quickAction: { minHeight: 68, borderRadius: 15, backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.outlineSoft, padding: 12, flexDirection: "row", alignItems: "center", gap: 12 },
   quickActionIcon: { width: 44, height: 44, borderRadius: 12, backgroundColor: colors.mint, alignItems: "center", justifyContent: "center" },

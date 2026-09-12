@@ -43,12 +43,36 @@ export function ForestPool({ level = 65, height = 200 }: { level?: number; heigh
   </Svg></View>;
 }
 
+/** Exact height of the grass band, in px. The nav bar pads its content by this much
+ *  so the icons always start just below the grass, whatever the bar's height is. */
+export const GRASS_HEIGHT = 30;
+
+// One smooth, even hump repeated 11× — a simple scalloped skyline, not random blades.
+const GRASS_HUMPS = Array.from({ length: 11 }, (_, i) => `Q${i * 40 + 20} 4 ${i * 40 + 40} 14`).join(" ");
+const GRASS_TOP = `M0 14 ${GRASS_HUMPS} L440 40 L0 40 Z`;
+
+const PEBBLES = [
+  { x: 46, y: 52, rx: 7, ry: 3.5 },
+  { x: 138, y: 76, rx: 5, ry: 2.5 },
+  { x: 224, y: 48, rx: 8, ry: 4 },
+  { x: 312, y: 70, rx: 5, ry: 2.5 },
+  { x: 396, y: 54, rx: 7, ry: 3.5 },
+];
+
 export function ForestFloor() {
-  return <Svg pointerEvents="none" style={StyleSheet.absoluteFill} width="100%" height="100%" viewBox="0 0 440 100" preserveAspectRatio="none" accessibilityElementsHidden>
-    <Rect width={440} height={100} fill={colors.soil} />
-    <Path d="M0 20c18-13 29 2 46-10 18-12 31 5 49-2 28-11 48 7 77 1 35-8 44 12 78 4 31-8 54 4 77-5 26-10 45 11 65 3 19-8 32 4 48 8v19H0Z" fill={colors.forest} />
-    <Path d="M0 30c51-8 84 6 126-2s74 7 119 0 85 7 126-1 53 2 69 7" stroke="#8D6540" strokeWidth={3} fill="none" opacity={0.7} />
-    {Array.from({ length: 20 }, (_, i) => <Path key={i} d={`M${i*23} 25q${i%2?-5:6} -15 ${i%3?2:-2} -24`} stroke={i%3 ? colors.leaf : colors.moss} strokeWidth={3} strokeLinecap="round" />)}
-    <Path d="M13 63q54 20 105 2t97 8q55 19 110-4t102-1" stroke={colors.soilDark} strokeWidth={2} fill="none" opacity={0.45} />
-  </Svg>;
+  return <View pointerEvents="none" style={StyleSheet.absoluteFill} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+    <Svg style={StyleSheet.absoluteFill} width="100%" height="100%" viewBox="0 0 440 100" preserveAspectRatio="none">
+      <Defs><LinearGradient id="santai-soil" x1="0" y1="0" x2="0" y2="1"><Stop offset="0" stopColor={colors.soil} /><Stop offset="1" stopColor={colors.soilDark} /></LinearGradient></Defs>
+      <Rect width={440} height={80} fill="url(#santai-soil)" />
+      <Rect y={46} width={440} height={1.5} fill={colors.soilDark} opacity={0.35} />
+      <Rect y={78} width={440} height={1.5} fill={colors.soilDark} opacity={0.25} />
+      {PEBBLES.map((p, i) => <Ellipse key={i} cx={p.x} cy={p.y} rx={p.rx} ry={p.ry} fill={colors.soilDark} opacity={0.3} />)}
+    </Svg>
+    {/* A fixed-height band sitting directly on the soil, so the grass is always exactly
+        on top of it rather than a percentage of a stretched viewBox. */}
+    <Svg style={{ position: "absolute", top: -10, left: 0, right: 0 }} width="100%" height={GRASS_HEIGHT} viewBox="0 0 440 40" preserveAspectRatio="none">
+      <Path d={GRASS_TOP} fill={colors.leaf} />
+      <Rect y={35} width={440} height={4} fill={colors.fern} opacity={0.5} />
+    </Svg>
+  </View>;
 }

@@ -1,4 +1,2 @@
 @AGENTS.md
-
 @CLAUDEman.md
-

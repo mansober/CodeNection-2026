@@ -37,7 +37,7 @@ Updated 13 September 2026 (1.2.0). Expo SDK 57, React Native and TypeScript. And
 
 - Daily / Weekly switching is in the hamburger menu, together with Schedule and Assignments.
 - Live capacity estimates for time, mental, physical and social appear as compact 2×2 signal cards with percentages and plain-language states, so colour is never the only indicator.
-- A broad, curved single leaf with a curled tip matches the approved dashboard reference. Its gentle breeze animation respects reduced-motion settings. The single-stem energy visual sits directly on the forest background above the cream dashboard sheet. Low energy makes the leaf smaller, dry amber and drooping; higher energy makes it larger, upright and green.
+- A broad, curved single leaf with a curled tip matches the approved dashboard reference. Its gentle breeze animation respects reduced-motion settings. The single-stem energy visual sits directly on the  background above the cream dashboard sheet. Low energy makes the leaf smaller, dry amber and drooping; higher energy makes it larger, upright and green.
 - The exact supplied cabbage-bunny mascot sheet is retained as the identity reference and cropped at runtime for the floating app pet. Tap the mascot for rotating motivational notes. When Check-in is due, a separate clickable note appears above it rather than consuming a dashboard card.
 - The former daily reminder space now holds the user's weekly note.
 - The flashcard entry is visually highlighted. Its add-material box uses a module dropdown and file upload; the redundant manual flashcard creation form is removed.
@@ -70,7 +70,7 @@ Updated 13 September 2026 (1.2.0). Expo SDK 57, React Native and TypeScript. And
 
 ## Theme and identity
 
-- Only the visual language from the supplied `rimbun-forest-final.zip` is adapted: forest backdrop, cream panels, spring-water/fern palette, forest-floor navigation and vector pool illustration.
+- Only the visual language from the supplied `rimbun--final.zip` is adapted:  backdrop, cream panels, spring-water/fern palette, -floor navigation and vector pool illustration.
 - DM Sans for interface text; Space Grotesk for prominent numbers. No Rimbun navigation, automatic water-refill rules or completion-spending model is imported.
 - Santai's original logo is an S-shaped resting river with leaves. SVG source: `assets/images/santai-mark.svg`; raster launcher, adaptive, monochrome, splash and favicon assets are generated from it.
 - The Android package remains `com.codenection.margin` intentionally, so Santai updates the existing installation rather than installing a second app. Existing storage keys and internal Margin component names are also retained for compatibility.

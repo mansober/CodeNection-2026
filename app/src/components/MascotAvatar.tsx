@@ -1,41 +1,25 @@
-import { Image, StyleProp, StyleSheet, View, ViewStyle } from "react-native";
+import { Image, ImageStyle, StyleProp } from "react-native";
 
-const source = require("../../assets/images/maskott-reference.png");
-const sheet = { width: 1122, height: 1402 };
-const wavePose = { x: 228, y: 55, width: 250, height: 250 };
+export type MascotPose = "idle" | "wave" | "happy" | "sleepy" | "wink";
 
-/**
- * Uses the supplied character sheet as a sprite so the established mascot stays exact.
- * The pale crop background is intentional: it comes from the original artwork.
- */
-export function MascotAvatar({ size = 86, style }: { size?: number; style?: StyleProp<ViewStyle> }) {
-  const scale = size / wavePose.width;
+/** Each pose is pre-cropped from the character sheet with its cream background removed. */
+const sources: Record<MascotPose, number> = {
+  idle: require("../../assets/images/mascot-idle.png"),
+  wave: require("../../assets/images/mascot-wave.png"),
+  happy: require("../../assets/images/mascot-happy.png"),
+  sleepy: require("../../assets/images/mascot-sleepy.png"),
+  wink: require("../../assets/images/mascot-wink.png"),
+};
+
+/** Transparent-background mascot art. `pose` picks the reaction to show. */
+export function MascotAvatar({ pose = "idle", size = 86, style }: { pose?: MascotPose; size?: number; style?: StyleProp<ImageStyle> }) {
   return (
-    <View
+    <Image
+      source={sources[pose]}
+      resizeMode="contain"
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
-      pointerEvents="none"
-      style={[styles.crop, { width: size, height: size }, style]}
-    >
-      <Image
-        source={source}
-        resizeMode="stretch"
-        style={{
-          position: "absolute",
-          width: sheet.width * scale,
-          height: sheet.height * scale,
-          left: -wavePose.x * scale,
-          top: -wavePose.y * scale,
-        }}
-      />
-    </View>
+      style={[{ width: size, height: size }, style]}
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  crop: {
-    overflow: "hidden",
-    borderRadius: 24,
-    backgroundColor: "#FCFBF5",
-  },
-});
