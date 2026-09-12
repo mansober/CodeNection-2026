@@ -24,6 +24,10 @@ export type Commitment = {
   durationHours?: number;
   originalDate?: string;
   helper?: string;
+  scheduleType?: "Fixed" | "Flexible" | "Daily routine";
+  endDate?: string;
+  weekdays?: number[];
+  sourceId?: string;
 };
 
 export type LoadWeights = Record<CapacityKind, number>;

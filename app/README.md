@@ -52,6 +52,6 @@ npm run export:web
 
 ## Current prototype
 
-See [PROTOTYPE.md](PROTOTYPE.md) for the full feature checklist, theme source, estimation rules and deferred integrations. App version 1.1.0 uses the Santai display name while retaining package `com.codenection.margin` for in-place updates.
+See [PROTOTYPE.md](PROTOTYPE.md) for the full feature checklist, theme source, estimation rules and deferred integrations. App version 1.1.1 simplifies module setup and adds fixed date ranges, multiple weekdays, daily routines and editable unscheduled commitments. It retains package `com.codenection.margin` for in-place updates.
 
 Run `node scripts/test-planner.cjs` for planner model regression checks.

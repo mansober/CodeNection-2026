@@ -25,6 +25,7 @@ const server = http.createServer((req,res) => { const file = path.join(root, dec
   const chooser = page.waitForEvent('filechooser'); await click('Import timetable');
   await (await chooser).setFiles({name:'semester.ics',mimeType:'text/calendar',buffer:Buffer.from('BEGIN:VCALENDAR\nBEGIN:VEVENT\nSUMMARY:Data Structures\nDTSTART:20260911T090000\nRRULE:FREQ=WEEKLY;BYDAY=MO,WE,FR\nEND:VEVENT\nBEGIN:VEVENT\nSUMMARY:Artificial Intelligence\nDTSTART:20260911T110000\nRRULE:FREQ=WEEKLY;BYDAY=TU,TH,FR\nEND:VEVENT\nEND:VCALENDAR')});
   await page.getByRole('checkbox',{name:'Data Structures has an assignment',exact:true}).click();
+  assert.equal(await page.getByText('Class days each week',{exact:true}).count(),0);
   await click('Save & add a commitment'); await page.getByRole('textbox',{name:'Commitment name',exact:true}).fill('Hackathon team meeting');
   await page.getByRole('radio',{name:'Competition',exact:true}).click(); await click('Add & add another commitment');
   await page.getByRole('textbox',{name:'Commitment name',exact:true}).fill('Groceries'); await click('Add & continue');
@@ -62,6 +63,34 @@ const server = http.createServer((req,res) => { const file = path.join(root, dec
   await page.getByRole('tab',{name:'Recover',exact:true}).click(); await page.getByRole('button',{name:'I’ve done this',exact:true}).first().click(); await page.getByRole('radio',{name:'Better',exact:true}).click(); await snapshot('recovery');
   await page.reload(); await page.getByRole('button',{name:'Update',exact:true}).waitFor();
   assert.equal(await page.getByText('A moment for yourself',{exact:true}).count(),0);
+  await page.getByRole('tab',{name:'Plan',exact:true}).click();
+  await click('Add commitment for this day');
+  assert.equal(await page.getByRole('radio',{name:'Class',exact:true}).count(),0);
+  assert.equal(await page.getByRole('radio',{name:'Assignment',exact:true}).count(),0);
+  await page.getByRole('textbox',{name:'Commitment name',exact:true}).fill('Everyday stretch');
+  await page.getByRole('radio',{name:'Daily routine',exact:true}).click();
+  assert.equal(await page.getByText('When will you need it? Start date',{exact:true}).count(),0);
+  await click('Add & continue');
+  await page.getByRole('button',{name:/Everyday stretch/}).waitFor();
+  await click('Next ›'); await page.getByRole('button',{name:/Everyday stretch/}).click();
+  await page.getByRole('radio',{name:'Skip this time',exact:true}).click(); await click('Apply to this commitment');
+  await click('Next ›'); assert.ok((await page.getByRole('button',{name:/Everyday stretch/}).innerText()).includes('Keep as planned'));
+  await click('Add commitment for this day');
+  await page.getByRole('textbox',{name:'Commitment name',exact:true}).fill('Undated club visit');
+  await page.getByRole('checkbox',{name:'Set up later',exact:true}).click();
+  assert.equal(await page.getByText('When will you need it? Start date',{exact:true}).count(),0);
+  await click('Add & continue'); await click('Set dates for Undated club visit');
+  await page.getByRole('checkbox',{name:'Set up later',exact:true}).click();
+  await page.getByRole('radio',{name:'2 weeks',exact:true}).click();
+  for (const day of ['Sun','Tue','Thu','Sat']) await page.getByRole('checkbox',{name:day,exact:true}).click();
+  await snapshot('fixed-range'); await click('Save changes');
+  await click('Open view menu'); await click('Schedule');
+  const updated = await page.evaluate(()=>JSON.parse(localStorage.getItem('margin-planner-v2')));
+  const repeating = updated.commitments.find(c=>c.name==='Undated club visit');
+  assert.deepEqual(repeating.weekdays,[1,3,5]); assert.ok(repeating.endDate > repeating.startDate);
+  assert.equal(updated.commitments.filter(c=>c.name==='Everyday stretch').length,1);
+  await page.reload(); await page.getByRole('button',{name:'Open view menu',exact:true}).waitFor();
+  assert.equal((await page.evaluate(()=>JSON.parse(localStorage.getItem('margin-planner-v2')).commitments.find(c=>c.name==='Undated club visit'))).endDate,repeating.endDate);
   assert.deepEqual(errors,[]); console.log('PASS: default routine, adaptive limits, ICS import, assignment setup, add-another, first-day check-in suppression, menus, skip/restore, bulk flashcards, persistence, next-day check-in, streak and recovery feedback.');
  } catch(e) { await snapshot('failure'); console.error((await page.locator('body').innerText()).slice(-9000)); throw e; }
  finally { await browser.close(); server.close(); }

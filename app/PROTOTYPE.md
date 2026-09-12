@@ -1,6 +1,6 @@
 # Santai — prototype handoff
 
-Updated 11 September 2026. Expo SDK 57, React Native and TypeScript. Android, iOS and web share the same frontend in `app/`.
+Updated 12 September 2026 (1.1.1). Expo SDK 57, React Native and TypeScript. Android, iOS and web share the same frontend in `app/`.
 
 ## Implemented flow
 
@@ -15,16 +15,20 @@ Updated 11 September 2026. Expo SDK 57, React Native and TypeScript. Android, iO
 
 ### Timetable and assignments
 
-- ICS import reads module names and recurring weekdays; repeated module names are merged. Review and edit module days before saving.
+- ICS import reads module names and recurring weekdays; repeated module names are merged. Module setup only asks for names and assignments, not class days. Manual modules retain the baseline class estimate until a timetable supplies actual weekdays.
 - Each module can have an assignment, with a start date and optional due date labelled “Set up later”.
 - Save proceeds to Add Commitment. Additional modules can be entered manually.
 - Selection cancellation, loading, invalid-file errors and manual fallback are handled.
 
 ### Add Commitment
 
-- Competition is included alongside Assignment, Class, Club, Job, Sport, Social and Personal.
-- Calendar start/due dates, duration and effort sliders, understandable social-load explanation.
-- Due dates cannot precede the start date.
+- Categories: Competition, Club, Job, Sport, Social and Personal. Classes and assignments stay in module management, not duplicate categories in this form.
+- Fixed: calendar start date, one day / 1 / 2 / 4 week range, and multiple weekdays. Set up later hides date questions and saves an unscheduled item.
+- Flexible: no date questions; stays unscheduled until edited to Fixed in Plan or Schedule.
+- Daily routine: repeats every day from creation, with no additional scheduling questions.
+- Only assignments and optional competition submissions have deadlines. A deadline cannot precede the last planned session; other categories use attendance dates, not artificial due dates.
+- Duration and effort sliders with an understandable social-load explanation.
+- Unscheduled items are visible in Plan and Schedule, but do not inflate dated load estimates. Repeating sessions count once on each matching day. Rebalancing one occurrence does not change other days; Edit details changes the whole series and clears its old occurrence overrides.
 - “Add & continue” and “Add & add another commitment” have distinct outcomes; editing has one Save action.
 
 ### Dashboard and menu

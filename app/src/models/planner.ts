@@ -29,6 +29,7 @@ export function parseTimetable(text: string): Module[] {
 }
 
 export function routinePlan(entries: Record<string, RoutineEntry>, modules: Module[], date: string, checkIn?: DailyCheckIn): Commitment[] {
+  modules = modules.filter(module => module.days.length > 0);
   const weekday = fromKey(date).getDay();
   const index = (weekday + 6) % 7;
   return routineCatalog.flatMap(item => {
@@ -51,6 +52,18 @@ export function routinePlan(entries: Record<string, RoutineEntry>, modules: Modu
 
 export function itemsOnDate(items: Commitment[], date: string) {
   return items.filter(item => item.action !== "Skip this time" && (item.startDate === date || (!item.startDate && item.dueDate === date)));
+}
+
+export function scheduledCommitments(items: Commitment[], date: string): Commitment[] {
+  return items.flatMap(item => {
+    if (item.scheduleType) {
+      if (!item.startDate || item.startDate > date) return [];
+      const occurs = item.scheduleType === "Daily routine" || (item.scheduleType === "Fixed" && date <= (item.endDate ?? item.startDate) && (!item.weekdays?.length || item.weekdays.includes(fromKey(date).getDay())));
+      if (!occurs) return [];
+      return [{ ...item, sourceId: item.id, id: `${item.id}@${date}`, startDate: date, routineId: item.scheduleType === "Daily routine" ? "daily-commitment" : undefined }];
+    }
+    return item.startDate === date || item.dueDate === date || (item.category === "Assignment" && !!item.startDate && item.startDate <= date && (!item.dueDate || item.dueDate >= date)) ? [item] : [];
+  });
 }
 export function loadFor(items: Commitment[], answers: Partial<Record<CapacityKind, number>>, checkIn?: DailyCheckIn) {
   return (Object.keys(capacityMeta) as CapacityKind[]).map(kind => {

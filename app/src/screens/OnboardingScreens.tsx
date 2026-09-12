@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { DateField, ValueSlider } from "@/components/PlannerControls";
-import { dateKey, prettyDate } from "@/models/planner";
+import { dateKey, prettyDate, shiftDate, fromKey } from "@/models/planner";
 
 import {
   AppButton,
@@ -203,23 +203,32 @@ export type CommitmentDraft = Omit<Commitment, "id" | "time" | "mental" | "physi
 
 export function CommitmentForm({ eyebrow, title, body, initial, submitText, onBack, onSubmit, secondaryAction, onAddAnother, defaultDate }: { eyebrow: string; title: string; body: string; initial?: Commitment; submitText: string; onBack: () => void; onSubmit: (commitment: Commitment) => void; secondaryAction?: { text: string; onPress: () => void }; onAddAnother?: (commitment: Commitment) => void; defaultDate?: string }) {
   const [name, setName] = useState(initial?.name ?? "");
-  const [category, setCategory] = useState(initial?.category ?? "Assignment");
-  const [flexibility, setFlexibility] = useState(initial?.flexibility ?? "Somewhat flexible");
+  const [category, setCategory] = useState(initial?.category ?? "Personal");
+  const [scheduleType, setScheduleType] = useState<NonNullable<Commitment["scheduleType"]>>(initial?.scheduleType ?? "Fixed");
+  const [later, setLater] = useState(!!initial?.scheduleType && !initial.startDate);
+  const [range, setRange] = useState(initial?.endDate && initial.startDate ? Math.round((fromKey(initial.endDate).getTime() - fromKey(initial.startDate).getTime()) / 86400000) + 1 : 1);
+  const [weekdays, setWeekdays] = useState<number[]>(initial?.weekdays ?? [0, 1, 2, 3, 4, 5, 6]);
+  const flexibility = initial?.flexibility ?? "Somewhat flexible";
   const [startDate, setStartDate] = useState(initial?.startDate ?? defaultDate ?? dateKey());
   const [dueDate, setDueDate] = useState(initial?.dueDate ?? "");
   const [duration, setDuration] = useState(initial?.durationHours ?? 1);
   const [savedNotice, setSavedNotice] = useState("");
   const [impact, setImpact] = useState({ mental: Math.min(5, Math.round((initial?.mental ?? 15) / 5)), physical: Math.min(5, Math.round((initial?.physical ?? 5) / 5)), social: Math.min(5, Math.round((initial?.social ?? 10) / 5)) });
-  const invalid = !name.trim() || !startDate || (!!dueDate && dueDate < startDate);
-  const draft = (): Commitment => ({ ...initial, id: initial?.id ?? createCommitmentId(name), name: name.trim(), category, startDate, dueDate: dueDate || undefined, schedule: prettyDate(startDate), flexibility, durationHours: duration, time: duration * 5, mental: impact.mental * 5, physical: impact.physical * 5, social: impact.social * 5 });
+  const legacy = !!initial && (initial.category === "Assignment" || initial.category === "Class" || !!initial.routineId);
+  const dated = legacy || (scheduleType === "Fixed" && !later);
+  const deadlineAllowed = category === "Assignment" || category === "Competition";
+  const dates = Array.from({ length: range }, (_, i) => shiftDate(startDate, i)).filter(date => range === 1 || weekdays.includes(fromKey(date).getDay()));
+  const invalid = !name.trim() || (dated && (!startDate || !dates.length || (deadlineAllowed && !!dueDate && dueDate < shiftDate(startDate, range - 1))));
+  const draft = (): Commitment => ({ ...initial, id: initial?.id ?? createCommitmentId(name), name: name.trim(), category, scheduleType: legacy ? undefined : scheduleType, startDate: dated ? startDate : scheduleType === "Daily routine" ? initial?.startDate ?? dateKey() : undefined, endDate: dated && !legacy ? shiftDate(startDate, range - 1) : undefined, weekdays: dated && range > 1 ? weekdays : undefined, dueDate: dated && deadlineAllowed ? dueDate || undefined : undefined, schedule: dated ? `${prettyDate(startDate)}${range > 1 ? ` · ${range} days` : ""}` : scheduleType === "Daily routine" ? "Every day" : "Set up later", flexibility: legacy ? flexibility : scheduleType === "Fixed" ? "Fixed" : "Flexible", durationHours: duration, time: duration * 5, mental: impact.mental * 5, physical: impact.physical * 5, social: impact.social * 5 });
   return <ScrollPage><PageHeader eyebrow={eyebrow} title={title} body={body} onBack={onBack} /><View style={s.content}>
     {savedNotice ? <InlineNotice title="Commitment added" body={savedNotice} /> : null}
-    <FormField label="Commitment name" value={name} onChangeText={setName} placeholder="e.g. Lab report" />
-    <SegmentedChoices label="Category" choices={["Assignment", "Class", "Competition", "Club", "Job", "Sport", "Social", "Personal"]} selected={category} onSelect={setCategory} />
-    <SegmentedChoices label="Can the plan change?" choices={["Fixed", "Somewhat flexible", "Flexible"]} selected={flexibility} onSelect={setFlexibility} />
-    <DateField label="When will you do it?" value={startDate} onChange={setStartDate} />
-    <DateField label="Due date (optional)" value={dueDate} onChange={setDueDate} optional />
-    {dueDate && dueDate < startDate ? <Text accessibilityRole="alert" style={s.body}>Choose a due date on or after the start date.</Text> : null}
+    {initial?.scheduleType && <Text style={s.bodySmallMuted}>Editing changes the whole commitment and resets any individual-day adjustments. To change just one day, use its Plan options instead.</Text>}
+    <FormField label="Commitment name" value={name} onChangeText={setName} placeholder="e.g. Hackathon practice" />
+    {legacy ? <Text style={s.label}>{category}</Text> : <SegmentedChoices label="Category" choices={["Competition", "Club", "Job", "Sport", "Social", "Personal"]} selected={category} onSelect={setCategory} />}
+    {!legacy && <><Text style={s.bodySmallMuted}>Classes and assignments are managed in Modules & assignments.</Text><SegmentedChoices label="How does this fit your week?" choices={["Fixed", "Flexible", "Daily routine"]} selected={scheduleType} onSelect={value => setScheduleType(value as NonNullable<Commitment["scheduleType"]>)} /></>}
+    {scheduleType === "Fixed" && !legacy && <CheckboxRow label="Set up later" selected={later} onPress={() => setLater(!later)} />}
+    {dated && <><DateField label={legacy ? "When will you do it?" : "When will you need it? Start date"} value={startDate} onChange={setStartDate} />{!legacy && <><SegmentedChoices label="For how long?" choices={["One day", "1 week", "2 weeks", "4 weeks"]} selected={range === 1 ? "One day" : range === 7 ? "1 week" : range === 14 ? "2 weeks" : range === 28 ? "4 weeks" : ""} onSelect={value => setRange(value === "One day" ? 1 : parseInt(value) * 7)} /><Text style={s.body}>{prettyDate(startDate)}{range > 1 ? ` – ${prettyDate(shiftDate(startDate, range - 1))}` : ""}</Text>{range > 1 && <><SectionLabel>Which days will you commit?</SectionLabel><View style={s.wrapRow}>{["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day, i) => <CheckboxRow key={day} label={day} selected={weekdays.includes(i)} onPress={() => setWeekdays(current => current.includes(i) ? current.filter(v => v !== i) : [...current, i])} />)}</View>{!dates.length && <Text accessibilityRole="alert" style={s.body}>Choose at least one day.</Text>}</>}</>}{deadlineAllowed && <DateField label={category === "Competition" ? "Submission deadline (only if required)" : "Due date (optional)"} value={dueDate} onChange={setDueDate} optional />}{deadlineAllowed && dueDate && dueDate < shiftDate(startDate, range - 1) ? <Text accessibilityRole="alert" style={s.body}>Your deadline must be on or after your last planned day.</Text> : null}</>}
+    {!dated && <Text style={s.bodySmallMuted}>{scheduleType === "Daily routine" ? "Repeats every day from today. No dates to fill in. Edit it in Plan or Schedule." : "Saved under Set up later in Plan and Schedule. It will not count towards a day's load until you choose dates."}</Text>}
     <ValueSlider label="Time needed" min={0.25} max={8} step={0.25} suffix=" hours" value={duration} onChange={setDuration} />
     <SectionLabel>Energy needed</SectionLabel><Text style={s.bodySmallMuted}>0 = no effort · 5 = very demanding</Text>
     {(["mental", "physical", "social"] as const).map(kind => <ValueSlider key={kind} label={kind === "social" ? "Social (effort spent interacting with others)" : capacityMeta[kind].label} value={impact[kind]} onChange={value => setImpact(current => ({ ...current, [kind]: value }))} />)}
