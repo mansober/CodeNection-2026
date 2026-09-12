@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
-import Svg, { Circle, Path } from "react-native-svg";
+
 import { AppButton, BottomNav, CapacityBar, Card, FormField, InlineNotice, PageHeader, ScrollPage, SectionLabel, SegmentedChoices } from "@/components/MarginUI";
 import { DateField, ValueSlider, ViewMenu } from "@/components/PlannerControls";
 import { CapacityValue, Commitment, MainTab, capacityMeta } from "@/models/margin";
 import { dateKey, planActions, prettyDate, shiftDate, weekStart } from "@/models/planner";
 import { screenStyles as s } from "./screenStyles";
-import { ForestPool } from "@/components/ForestTheme";
+import { EnergyReservoir } from "@/components/EnergyReservoir";
 import { colors, fonts } from "@/theme/tokens";
 
 export type Period = "Daily" | "Weekly";
@@ -18,12 +18,12 @@ function PlannerMenu({ period, onPeriod, onSchedule, onAssignments }: MenuProps)
   return <ViewMenu choices={["Daily", "Weekly"]} value={period} onChange={v => onPeriod(v as Period)} onSchedule={onSchedule} onAssignments={onAssignments} />;
 }
 
-export function CurrentHomeScreen({ period, onPeriod, onSchedule, onAssignments, capacities, overall, energy, streak, checkInEligible, checkInSaved, onCheckIn, onTab, onRebalance, onTest, onFlashcards, lessonNames, hasMaterials, weeklyNote }: MenuProps & { capacities: CapacityValue[]; overall: number; energy: number; streak: number; checkInEligible: boolean; checkInSaved: boolean; onCheckIn: () => void; onTab: (tab: MainTab) => void; onRebalance: () => void; onTest: () => void; onFlashcards: () => void; lessonNames: string[]; hasMaterials: boolean; weeklyNote: string }) {
+export function CurrentHomeScreen({ period, onPeriod, onSchedule, onAssignments, capacities, overall, energy, checkInEligible, checkInSaved, onCheckIn, onTab, onRebalance, onTest, onFlashcards, lessonNames, hasMaterials, weeklyNote }: MenuProps & { capacities: CapacityValue[]; overall: number; energy: number; streak: number; checkInEligible: boolean; checkInSaved: boolean; onCheckIn: () => void; onTab: (tab: MainTab) => void; onRebalance: () => void; onTest: () => void; onFlashcards: () => void; lessonNames: string[]; hasMaterials: boolean; weeklyNote: string }) {
   return <ScrollPage bottomBar={<BottomNav selected="today" onSelect={onTab} />}><PlannerMenu {...{ period, onPeriod, onSchedule, onAssignments }} />
     <PageHeader eyebrow={prettyDate(dateKey())} title="Your day, with room to breathe" />
     <View style={s.content}>
       {checkInEligible && <View style={[s.rowBetween, { backgroundColor: colors.mint, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 2 }]}><Text style={[s.bodySmall, s.flex]}>{checkInSaved ? "Today’s check-in is saved" : "You haven’t checked in today"}</Text><AppButton text={checkInSaved ? "Update" : "Check in"} variant="quiet" style={{ minHeight: 48, paddingHorizontal: 12 }} onPress={onCheckIn} /></View>}
-      <Card style={{ gap: 12 }}><ForestPool level={energy} height={150} /><View style={s.rowBetween}><View style={s.flex}><Text style={s.eyebrow}>TODAY’S ENERGY</Text><Text style={{ fontFamily: fonts.number, fontSize: 34, color: colors.forest }}>{energy} / 100</Text><Text style={s.bodySmallMuted}>Estimated room left for today</Text></View><StreakAvatar streak={streak} energy={energy} /></View><Text style={s.caption}>A planning estimate, not a health measurement. Completing today’s recovery adds 10 energy, once per day.</Text>{!checkInEligible && <Text style={s.bodySmallMuted}>You’re all set for today. Your first daily check-in starts tomorrow.</Text>}</Card>
+      <EnergyReservoir energy={energy} /><View style={{ gap: 10 }}><Text style={s.caption}>A planning estimate, not a health measurement. Completing today’s recovery adds 10 energy, once per day.</Text>{!checkInEligible && <Text style={s.bodySmallMuted}>You’re all set for today. Your first daily check-in starts tomorrow.</Text>}</View>
       <Card tone="dark" style={{ gap: 8 }}><Text style={s.whiteBody}>{period === "Daily" ? "TODAY’S LOAD" : "WEEKLY AVERAGE LOAD"}</Text><Text style={{ fontFamily: fonts.number, fontSize: 46, color: colors.white }}>{overall}%</Text><Text style={s.whiteBody}>{overall >= 85 ? "Your plan is asking a lot. Make room for a break." : overall >= 60 ? "A steady day. Keep a little space for yourself." : "There’s room to move at your own pace."}</Text></Card>
       <SectionLabel>Your four capacities</SectionLabel>{capacities.map(value => <CapacityBar key={value.kind} value={value} />)}
       <Pressable accessibilityRole="button" accessibilityLabel="Open daily flashcards" onPress={onFlashcards}><Card tone="amber" style={{ gap: 10 }}><Text style={s.eyebrow}>DAILY FLASHCARDS</Text><Text style={s.title}>{hasMaterials ? "A little revision for today" : "+ Upload your learning materials"}</Text><Text style={s.body}>{lessonNames.length ? lessonNames.join(" · ") : "No classes scheduled today. Explore your library."}</Text><Text style={s.bodySmallMuted}>{hasMaterials ? "Open your module cards and practise at your pace." : "Upload your learning materials for daily flashcards."}</Text><Text style={s.linkText}>{hasMaterials ? "Open flashcards →" : "Add learning materials →"}</Text></Card></Pressable>
@@ -33,9 +33,6 @@ export function CurrentHomeScreen({ period, onPeriod, onSchedule, onAssignments,
     </View></ScrollPage>;
 }
 
-function StreakAvatar({ streak, energy }: { streak: number; energy: number }) {
-  return <View style={{ alignItems: "center", gap: 4 }} accessibilityLabel={`${streak} day check-in streak`}><Svg width={80} height={80} viewBox="0 0 80 80"><Circle cx={40} cy={40} r={38} fill={colors.mint} /><Path d="M20 66 Q20 45 40 45 Q60 45 60 66" fill={colors.forest} /><Circle cx={40} cy={32} r={18} fill={colors.softAmber} /><Circle cx={34} cy={31} r={2} fill={colors.ink} /><Circle cx={46} cy={31} r={2} fill={colors.ink} /><Path d={energy > 30 ? "M34 38 Q40 44 46 38" : "M34 40 L46 40"} stroke={colors.ink} strokeWidth={2} fill="none" /><Path d="M40 14 Q28 1 25 13 Q32 19 40 14 Q51 2 55 12 Q49 20 40 14" fill={streak > 0 ? colors.forest : colors.outline} /></Svg><Text style={s.label}>{streak} day{streak === 1 ? "" : "s"}</Text><Text style={s.caption}>Check-in streak</Text></View>;
-}
 
 export function CurrentPlanScreen({ period, onPeriod, onSchedule, onAssignments, filter, unscheduled, days, selectedDate, onDate, onTab, onAdd, onEdit, onAction, onImport }: MenuProps & { filter: PlanFilter; unscheduled: Commitment[]; days: PlanDay[]; selectedDate: string; onDate: (date: string) => void; onTab: (tab: MainTab) => void; onAdd: () => void; onEdit: (item: Commitment) => void; onAction: (item: Commitment, action: string, date: string, duration: number, helper: string) => void; onImport: () => void }) {
   const [expanded, setExpanded] = useState("");

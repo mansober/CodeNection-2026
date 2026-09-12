@@ -9,6 +9,7 @@ import { FlashcardScreen } from "@/screens/FlashcardScreen";
 import { InlineNotice, PageHeader, ScrollPage } from "@/components/MarginUI";
 import { AppScreen, CapacityKind, Commitment, DailyCheckIn, MainTab, RoutineEntry } from "@/models/margin";
 import { Material, Module, RecoveryResult, dateKey, fromKey, loadFor, loadPercent, prettyDate, routinePlan, scheduledCommitments, shiftDate, weekStart } from "@/models/planner";
+import { StreakPetContext } from "@/components/StreakPet";
 import { readSavedPlan, writeSavedPlan } from "@/models/storage";
 import { colors } from "@/theme/tokens";
 import { screenStyles as s } from "@/screens/screenStyles";
@@ -37,6 +38,7 @@ export function MarginApp() {
   const [loaded, setLoaded] = useState(false);
   const [storageError, setStorageError] = useState("");
   const [screen, setScreen] = useState<AppScreen>("welcome");
+  const [setupActive, setSetupActive] = useState(true);
   const [draft, setDraft] = useState<Commitment>();
   const [feelIndex, setFeelIndex] = useState(0);
   const [editing, setEditing] = useState<Commitment>();
@@ -55,7 +57,7 @@ export function MarginApp() {
       if (raw) {
         const saved = JSON.parse(raw) as Partial<PlannerState>;
         setState({ ...initialState, ...saved });
-        if (saved.registeredOn) setScreen("today");
+        // Prototype: cold launches open Welcome without deleting the saved plan.
       }
       setLoaded(true);
     }).catch(() => { if (active) { setStorageError("Your saved plan could not be read. Close and reopen Santai to retry; the saved file has not been overwritten."); } });
@@ -78,7 +80,7 @@ export function MarginApp() {
   }, [screen, today, currentCheck, checkInEligible]);
   useEffect(() => {
     if (screen !== "preparing") return;
-    const timer = setTimeout(() => { setState(current => ({ ...current, registeredOn: current.registeredOn ?? dateKey() })); setScreen("today"); }, 1000);
+    const timer = setTimeout(() => { setState(current => ({ ...current, registeredOn: current.registeredOn ?? dateKey() })); setSetupActive(false); setScreen("today"); }, 1000);
     return () => clearTimeout(timer);
   }, [screen]);
 
@@ -86,9 +88,9 @@ export function MarginApp() {
     if (checkInVisible) { setCheckInVisible(false); return true; }
     if (screen === "welcome" || screen === "today") return false;
     if (screen === "feel-questions" && feelIndex > 0) { setFeelIndex(i => i - 1); return true; }
-    const target: Partial<Record<AppScreen, AppScreen>> = { "routine-checklist": "welcome", "routine-hours": "routine-checklist", "feel-questions": "routine-hours", "setup-choice": "feel-questions", "import-timetable": state.registeredOn ? "plan" : "setup-choice", "add-onboarding": "setup-choice", "anything-else": "setup-choice", simulator: "test-commitment", add: "plan", flashcards: "today" };
+    const target: Partial<Record<AppScreen, AppScreen>> = { "routine-checklist": "welcome", "routine-hours": "routine-checklist", "feel-questions": "routine-hours", "setup-choice": "feel-questions", "import-timetable": setupActive ? "setup-choice" : "plan", "add-onboarding": "setup-choice", "anything-else": "setup-choice", simulator: "test-commitment", add: "plan", flashcards: "today" };
     setScreen(target[screen] ?? "today"); return true;
-  }, [screen, feelIndex, checkInVisible, state.registeredOn]);
+  }, [screen, feelIndex, checkInVisible, setupActive]);
   useEffect(() => { const sub = BackHandler.addEventListener("hardwareBackPress", goBack); return () => sub.remove(); }, [goBack]);
 
   const makeDay = (date: string) => {
@@ -135,14 +137,14 @@ export function MarginApp() {
     setState(current => {
       const assignments = modules.filter(m => m.assignment).map(m => ({ id: "assignment-" + m.id, moduleId: m.id, name: m.name + " assignment", category: "Assignment", schedule: prettyDate(m.assignment!.start), startDate: m.assignment!.start, dueDate: m.assignment!.due || undefined, durationHours: 1, time: 5, mental: 15, physical: 0, social: 0, flexibility: "Somewhat flexible" }));
       return { ...current, modules, routineEntries: modules.length && !current.routineEntries.classes ? { ...current.routineEntries, classes: { durationHours: 2, timesPerWeek: 5, condition: "Typical" } } : current.routineEntries, overrides: Object.fromEntries(Object.entries(current.overrides).filter(([id]) => !id.startsWith("assignment-"))), commitments: [...current.commitments.filter(c => !c.id.startsWith("assignment-")), ...assignments] };
-    }); navigate(state.registeredOn ? "add" : "add-onboarding");
+    }); navigate(setupActive ? "add-onboarding" : "add");
   };
   const selectedIds = Object.keys(state.routineEntries);
   const updateEntry = (id: string, entry: RoutineEntry) => setState(current => ({ ...current, routineEntries: { ...current.routineEntries, [id]: entry } }));
 
   if (!loaded) return <ScrollPage><PageHeader eyebrow="Santai" title={storageError ? "Your plan needs attention" : "Opening your plan"} /><View style={s.content}>{storageError ? <Text style={s.body}>{storageError}</Text> : <ActivityIndicator color={colors.forest} />}</View></ScrollPage>;
   let page;
-  if (screen === "welcome") page = <WelcomeScreen onStart={() => navigate("routine-checklist")} />;
+  if (screen === "welcome") page = <WelcomeScreen onStart={() => { setSetupActive(true); navigate("routine-checklist"); }} onResume={state.registeredOn ? () => { setSetupActive(false); navigate("today"); } : undefined} />;
   else if (screen === "routine-checklist") page = <RoutineChecklistScreen selectedIds={selectedIds} onToggle={id => setState(current => { const entries = { ...current.routineEntries }; if (entries[id]) delete entries[id]; else entries[id] = { durationHours: 1, timesPerWeek: 1, condition: "Typical" }; return { ...current, routineEntries: entries }; })} onBack={goBack} onContinue={() => navigate("routine-hours")} />;
   else if (screen === "routine-hours") page = <RoutineHoursScreen selectedIds={selectedIds} entries={state.routineEntries} onEntryChange={updateEntry} onBack={goBack} onContinue={() => { setFeelIndex(0); navigate("feel-questions"); }} />;
   else if (screen === "feel-questions") page = <FeelQuestionsScreen selectedIds={selectedIds} entries={state.routineEntries} answers={state.feelAnswers} recoveryChoice={state.recoveryChoice} index={feelIndex} onAnswer={(kind, value) => patch({ feelAnswers: { ...state.feelAnswers, [kind]: value } })} onRecovery={value => patch({ recoveryChoice: value })} onIndexChange={setFeelIndex} onBack={goBack} onContinue={() => navigate("setup-choice")} />;
@@ -160,5 +162,5 @@ export function MarginApp() {
   else if (screen === "test-commitment") page = <WhatIfForm draft={draft} date={today} onBack={() => navigate("today")} onTest={item => { setDraft(item); navigate("simulator"); }} />;
   else if (screen === "simulator" && draft) page = <WhatIfResult draft={draft} capacities={makeDay(draft.startDate ?? today).capacities} onBack={() => navigate("test-commitment")} onConfirm={() => { saveCommitment(draft); setSelectedDate(draft.startDate ?? today); setDraft(undefined); showPlan("All"); }} onDecline={() => { setDraft(undefined); navigate("today"); }} onPlan={() => showPlan("All")} />;
   else page = <WhatIfForm draft={draft} date={today} onBack={() => navigate("today")} onTest={item => { setDraft(item); navigate("simulator"); }} />;
-  return <View style={{ flex: 1 }}>{storageError ? <InlineNotice title="Saving needs attention" body={storageError} tone="amber" /> : null}{page}</View>;
+  return <StreakPetContext.Provider value={streak}><View style={{ flex: 1 }}>{storageError ? <InlineNotice title="Saving needs attention" body={storageError} tone="amber" /> : null}{page}</View></StreakPetContext.Provider>;
 }

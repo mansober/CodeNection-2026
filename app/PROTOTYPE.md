@@ -1,6 +1,6 @@
 # Santai — prototype handoff
 
-Updated 12 September 2026 (1.1.1). Expo SDK 57, React Native and TypeScript. Android, iOS and web share the same frontend in `app/`.
+Updated 12 September 2026 (1.1.2). Expo SDK 57, React Native and TypeScript. Android, iOS and web share the same frontend in `app/`.
 
 ## Implemented flow
 
@@ -12,6 +12,7 @@ Updated 12 September 2026 (1.1.1). Expo SDK 57, React Native and TypeScript. And
 - Question selection adapts to the chosen routines, followed by recovery-time preference.
 - Import a timetable or add commitments manually, then save an optional weekly note.
 - A short preparation screen assembles the local plan. No daily check-in is shown on the registration date.
+- Prototype replay: every cold app launch or browser reload opens Welcome, including for returning users. Build my week revisits baseline with saved answers; Continue saved plan skips setup. Backgrounding alone does not reset an unfinished form. Saved commitments, modules, diary and streak are retained.
 
 ### Timetable and assignments
 
@@ -35,6 +36,8 @@ Updated 12 September 2026 (1.1.1). Expo SDK 57, React Native and TypeScript. And
 
 - Daily / Weekly switching is in the hamburger menu, together with Schedule and Assignments.
 - Live capacity estimates for time, mental, physical and social; energy out of 100; check-in streak avatar.
+- The energy visual adapts the upright WaterReservoir from the Rimbun ZIP: blue-green water, a distinct waterline, scale and readable energy number. It uses the existing estimate, not the ZIP's hourly-refill mechanic.
+- An original leaf-shaped streak pet floats at the bottom-right above navigation on the four main pages. Tap for a short streak message. Gentle bobbing respects system reduced-motion settings; scroll padding keeps final actions reachable.
 - A compact missing-check-in banner appears from the day after registration; a saved check-in can be updated.
 - The flashcard banner displays today's module names from the timetable, with an upload entry point when the library is empty.
 - Direct actions to review/rebalance the real plan and preview a possible commitment.

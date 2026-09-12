@@ -1,4 +1,5 @@
-import type { PropsWithChildren, ReactNode } from "react";
+import { useContext, useState, type PropsWithChildren, type ReactNode } from "react";
+import { StreakPet, StreakPetContext } from "./StreakPet";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -28,6 +29,7 @@ export function MarginMark({ light = false, size = 24 }: { light?: boolean; size
 }
 
 export function PageShell({ children, bottomBar }: PropsWithChildren<{ bottomBar?: ReactNode }>) {
+  const [navHeight, setNavHeight] = useState(80);
   return (
     <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
       <View style={styles.pageFrame}>
@@ -35,18 +37,20 @@ export function PageShell({ children, bottomBar }: PropsWithChildren<{ bottomBar
         <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === "ios" ? "padding" : undefined}>
           {children}
         </KeyboardAvoidingView>
-        {bottomBar}
+        {bottomBar && <View onLayout={event => setNavHeight(event.nativeEvent.layout.height)}>{bottomBar}</View>}
+        {bottomBar && <StreakPet bottom={navHeight} />}
       </View>
     </SafeAreaView>
   );
 }
 
 export function ScrollPage({ children, bottomBar, contentStyle }: PropsWithChildren<{ bottomBar?: ReactNode; contentStyle?: StyleProp<ViewStyle> }>) {
+  const pet = useContext(StreakPetContext);
   return (
     <PageShell bottomBar={bottomBar}>
       <ScrollView
         style={styles.flex}
-        contentContainerStyle={[styles.scrollContent, contentStyle]}
+        contentContainerStyle={[styles.scrollContent, contentStyle, bottomBar && pet !== undefined ? { paddingBottom: 120 } : undefined]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >

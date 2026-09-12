@@ -38,7 +38,7 @@ import {
 import { colors, fonts, type } from "@/theme/tokens";
 import { screenStyles as s } from "@/screens/screenStyles";
 
-export function WelcomeScreen({ onStart }: { onStart: () => void }) {
+export function WelcomeScreen({ onStart, onResume }: { onStart: () => void; onResume?: () => void }) {
   return (
     <ScrollPage contentStyle={styles.welcomePage}>
       <View style={styles.brandRow}>
@@ -63,6 +63,7 @@ export function WelcomeScreen({ onStart }: { onStart: () => void }) {
       </View>
       <View style={styles.welcomeFooter}>
         <AppButton text="Build my week" onPress={onStart} />
+        {onResume && <><Text style={styles.centerCaption}>Prototype mode: revisit your baseline on each fresh launch. Your saved plan is kept.</Text><AppButton text="Continue saved plan" variant="secondary" onPress={onResume} /></>}
         <Text style={styles.centerCaption}>Takes about two minutes. You can change everything later.</Text>
       </View>
     </ScrollPage>
