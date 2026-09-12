@@ -126,6 +126,12 @@ export function MarginApp() {
   const onAction = (item: Commitment, action: string, date: string, duration: number, helper: string) => {
     setState(current => {
       const original = item.sourceId ? scheduledCommitments(current.commitments, item.originalDate ?? item.startDate ?? today).find(v => v.id === item.id) ?? item : item.routineId ? routinePlan(current.routineEntries, current.modules, item.originalDate ?? item.startDate ?? today, current.checks[item.originalDate ?? item.startDate ?? today]).find(v => v.id === item.id) ?? item : current.commitments.find(v => v.id === item.id) ?? item;
+      if (!item.startDate && !item.dueDate && !item.sourceId && !item.routineId) {
+        const ratio = action === "Make it lighter" ? Math.min(1, duration / Math.max(0.25, original.durationHours ?? original.time / 5)) : 1;
+        const updated: Commitment = { ...original, action, helper: helper.trim(), durationHours: action === "Make it lighter" ? duration : original.durationHours, time: original.time * ratio, mental: original.mental * ratio, physical: original.physical * ratio, social: original.social * ratio };
+        if (action === "Move to another day") { updated.startDate = date; updated.endDate = date; updated.scheduleType = "Fixed"; updated.weekdays = undefined; updated.schedule = prettyDate(date); }
+        return { ...current, commitments: current.commitments.map(v => v.id === item.id ? updated : v) };
+      }
       if (action === "Keep as planned") { const next = { ...current.overrides }; delete next[item.id]; return { ...current, overrides: next }; }
       const ratio = action === "Make it lighter" ? Math.min(1, duration / Math.max(0.25, original.durationHours ?? original.time / 5)) : 1;
       const nextDate = action === "Move to another day" ? date : item.startDate ?? today;
@@ -144,7 +150,7 @@ export function MarginApp() {
 
   if (!loaded) return <ScrollPage><PageHeader eyebrow="Santai" title={storageError ? "Your plan needs attention" : "Opening your plan"} /><View style={s.content}>{storageError ? <Text style={s.body}>{storageError}</Text> : <ActivityIndicator color={colors.forest} />}</View></ScrollPage>;
   let page;
-  if (screen === "welcome") page = <WelcomeScreen onStart={() => { setSetupActive(true); navigate("routine-checklist"); }} onResume={state.registeredOn ? () => { setSetupActive(false); navigate("today"); } : undefined} />;
+  if (screen === "welcome") page = <WelcomeScreen onStart={() => { setSetupActive(true); navigate("routine-checklist"); }} />;
   else if (screen === "routine-checklist") page = <RoutineChecklistScreen selectedIds={selectedIds} onToggle={id => setState(current => { const entries = { ...current.routineEntries }; if (entries[id]) delete entries[id]; else entries[id] = { durationHours: 1, timesPerWeek: 1, condition: "Typical" }; return { ...current, routineEntries: entries }; })} onBack={goBack} onContinue={() => navigate("routine-hours")} />;
   else if (screen === "routine-hours") page = <RoutineHoursScreen selectedIds={selectedIds} entries={state.routineEntries} onEntryChange={updateEntry} onBack={goBack} onContinue={() => { setFeelIndex(0); navigate("feel-questions"); }} />;
   else if (screen === "feel-questions") page = <FeelQuestionsScreen selectedIds={selectedIds} entries={state.routineEntries} answers={state.feelAnswers} recoveryChoice={state.recoveryChoice} index={feelIndex} onAnswer={(kind, value) => patch({ feelAnswers: { ...state.feelAnswers, [kind]: value } })} onRecovery={value => patch({ recoveryChoice: value })} onIndexChange={setFeelIndex} onBack={goBack} onContinue={() => navigate("setup-choice")} />;

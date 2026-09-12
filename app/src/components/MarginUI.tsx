@@ -28,26 +28,27 @@ export function MarginMark({ light = false, size = 24 }: { light?: boolean; size
   );
 }
 
-export function PageShell({ children, bottomBar }: PropsWithChildren<{ bottomBar?: ReactNode }>) {
+export function PageShell({ children, bottomBar, plain = false }: PropsWithChildren<{ bottomBar?: ReactNode; plain?: boolean }>) {
   const [navHeight, setNavHeight] = useState(80);
+  const [frame, setFrame] = useState({ width: 320, height: 600 });
   return (
     <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
-      <View style={styles.pageFrame}>
-        <ForestBackdrop />
+      <View style={styles.pageFrame} onLayout={e => setFrame(e.nativeEvent.layout)}>
+        {!plain && <ForestBackdrop />}
         <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === "ios" ? "padding" : undefined}>
           {children}
         </KeyboardAvoidingView>
         {bottomBar && <View onLayout={event => setNavHeight(event.nativeEvent.layout.height)}>{bottomBar}</View>}
-        {bottomBar && <StreakPet bottom={navHeight} />}
+        {bottomBar && <StreakPet bottom={navHeight} frame={frame} />}
       </View>
     </SafeAreaView>
   );
 }
 
-export function ScrollPage({ children, bottomBar, contentStyle }: PropsWithChildren<{ bottomBar?: ReactNode; contentStyle?: StyleProp<ViewStyle> }>) {
+export function ScrollPage({ children, bottomBar, contentStyle, plain }: PropsWithChildren<{ bottomBar?: ReactNode; contentStyle?: StyleProp<ViewStyle>; plain?: boolean }>) {
   const pet = useContext(StreakPetContext);
   return (
-    <PageShell bottomBar={bottomBar}>
+    <PageShell bottomBar={bottomBar} plain={plain}>
       <ScrollView
         style={styles.flex}
         contentContainerStyle={[styles.scrollContent, contentStyle, bottomBar && pet !== undefined ? { paddingBottom: 120 } : undefined]}

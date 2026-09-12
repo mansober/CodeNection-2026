@@ -18,7 +18,7 @@ import {
   SectionLabel,
   SegmentedChoices,
 } from "@/components/MarginUI";
-import { ForestPool } from "@/components/ForestTheme";
+import { LeafIllustration } from "@/components/EnergyLeaf";
 import { MarginIcon } from "@/components/MarginIcon";
 import {
   CapacityKind,
@@ -38,9 +38,9 @@ import {
 import { colors, fonts, type } from "@/theme/tokens";
 import { screenStyles as s } from "@/screens/screenStyles";
 
-export function WelcomeScreen({ onStart, onResume }: { onStart: () => void; onResume?: () => void }) {
+export function WelcomeScreen({ onStart }: { onStart: () => void }) {
   return (
-    <ScrollPage contentStyle={styles.welcomePage}>
+    <ScrollPage plain contentStyle={styles.welcomePage}>
       <View style={styles.brandRow}>
         <MarginMark size={24} />
         <Text style={styles.brandName}>SANTAI</Text>
@@ -48,22 +48,10 @@ export function WelcomeScreen({ onStart, onResume }: { onStart: () => void; onRe
       <View style={styles.welcomeHero}>
         <Text accessibilityRole="header" style={styles.display}>Know the cost{"\n"}before you say yes.</Text>
         <Text style={styles.lead}>A weekly capacity planner for classes, clubs, work, and the rest of your life.</Text>
-        <ForestPool height={230} /><View style={styles.capacitySculpture} accessibilityLabel="Four capacity dimensions: Time, Mental, Physical and Social">
-          {[
-            ["T", colors.forest, 66],
-            ["M", colors.coral, 92],
-            ["P", colors.softAmber, 58],
-            ["S", "#E9E6F8", 76],
-          ].map(([label, color, height]) => (
-            <View key={String(label)} style={[styles.sculptureBar, { backgroundColor: String(color), height: Number(height) }]}>
-              <Text style={[styles.sculptureLabel, { color: label === "T" || label === "M" ? colors.white : colors.ink }]}>{label}</Text>
-            </View>
-          ))}
-        </View>
+        <LeafIllustration energy={100} height={210} />
       </View>
       <View style={styles.welcomeFooter}>
         <AppButton text="Build my week" onPress={onStart} />
-        {onResume && <><Text style={styles.centerCaption}>Prototype mode: revisit your baseline on each fresh launch. Your saved plan is kept.</Text><AppButton text="Continue saved plan" variant="secondary" onPress={onResume} /></>}
         <Text style={styles.centerCaption}>Takes about two minutes. You can change everything later.</Text>
       </View>
     </ScrollPage>

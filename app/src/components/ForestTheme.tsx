@@ -5,7 +5,7 @@ import { colors } from "@/theme/tokens";
 // Visual adaptation of the user-supplied Rimbun forest theme. No Rimbun state or rules.
 export function ForestBackdrop() {
   return <View pointerEvents="none" style={StyleSheet.absoluteFill} accessibilityElementsHidden importantForAccessibility="no-hide-descendants"><Svg width="100%" height="100%" viewBox="0 0 440 920" preserveAspectRatio="xMidYMid slice">
-    <Defs><LinearGradient id="santai-sky" x1="0" y1="0" x2="0" y2="1"><Stop offset="0" stopColor="#071F19" /><Stop offset="1" stopColor="#1A4A36" /></LinearGradient></Defs>
+    <Defs><LinearGradient id="santai-sky" x1="0" y1="0" x2="0" y2="1"><Stop offset="0" stopColor="#071F19" /><Stop offset="0.46" stopColor="#123F31" /><Stop offset="1" stopColor="#1A4A36" /></LinearGradient></Defs>
     <Rect width={440} height={920} fill="url(#santai-sky)" />
     <Circle cx={110} cy={118} r={118} fill="#77A177" opacity={0.08} />
     <G fill="#87A88A" opacity={0.14}><Path d="M40 0C63 142 28 278 56 448s6 314-21 472h38c14-212-2-326 5-483C91 252 95 113 82 0Z" /><Path d="M177 0c-8 148 27 260 10 424-18 172 10 326 0 496h34c-7-180-1-338 4-489 6-181-3-306-10-431Z" /><Path d="M348 0c-1 127-24 243-8 405 16 163-3 342 12 515h37c-25-198 0-341-14-516-13-162 18-293 13-404Z" /></G>

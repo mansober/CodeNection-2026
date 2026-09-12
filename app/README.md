@@ -52,6 +52,7 @@ npm run export:web
 
 ## Current prototype
 
-See [PROTOTYPE.md](PROTOTYPE.md) for the full feature checklist, theme source, estimation rules and deferred integrations. App version 1.1.2 adds a floating forest streak pet, Rimbun-inspired energy reservoir, and Welcome/baseline replay on each fresh launch while preserving saved data. It retains package `com.codenection.margin` for in-place updates.
+See [PROTOTYPE.md](PROTOTYPE.md) for the full feature checklist, theme source, estimation rules and deferred integrations. App version 1.1.3 adds an energy-responsive leaf, a movable forest streak pet, and a simplified Welcome with baseline replay on each fresh launch while preserving saved data. It retains package `com.codenection.margin` for in-place updates.
 
 Run `node scripts/test-planner.cjs` for planner model regression checks.
+The 1.1.3 interface replaces the reservoir with an energy-responsive single leaf, simplifies Welcome to Build my week, and adds a draggable streak pet with active/inactive expressions. Plan options also cover unscheduled commitments. See PROTOTYPE.md for the current behaviour.

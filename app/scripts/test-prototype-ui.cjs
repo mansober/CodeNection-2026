@@ -13,9 +13,17 @@ const server = http.createServer((req,res) => { const file = path.join(root, dec
  const page = await browser.newPage({ viewport: { width:Number(process.env.TEST_WIDTH || 390),height:844 }, deviceScaleFactor:1 });
  const errors=[]; page.on('pageerror',e=>errors.push(e.message));
  const click = name => page.getByRole('button',{name,exact:true}).click();
+ const reopen = async () => {
+   await click('Build my week'); await click('Add weekly hours'); await click('Set personal limits');
+   for (let i=0;i<6;i++) {
+     if (await page.getByRole('button',{name:'Set my baseline',exact:true}).count()) { await click('Set my baseline'); break; }
+     await click('Next question');
+   }
+   await click('Show my baseline for now'); await click('Build my plan');
+ };
  const snapshot = name => page.screenshot({path:path.join(output,`margin-v2-${name}.png`)});
  try {
-  await page.goto('http://127.0.0.1:4173'); await click('Build my week');
+  await page.goto('http://127.0.0.1:4173'); await page.getByRole('button',{name:'Build my week',exact:true}).waitFor(); await snapshot('welcome'); assert.equal(await page.getByRole('button',{name:'Continue saved plan',exact:true}).count(),0); await click('Build my week');
   assert.equal(await page.getByRole('checkbox',{name:'Classes / lectures',exact:true}).getAttribute('aria-checked'),'true');
   assert.equal(await page.getByRole('checkbox',{name:'Assignments & study',exact:true}).getAttribute('aria-checked'),'true');
   await page.getByRole('checkbox',{name:'Gym or sport',exact:true}).click(); await click('Add weekly hours');
@@ -38,6 +46,9 @@ const server = http.createServer((req,res) => { const file = path.join(root, dec
   await pet.click(); await page.getByText(/I’m here to keep you company/).waitFor(); await pet.click();
   await page.getByText('TODAY’S LOAD',{exact:true}).scrollIntoViewIfNeeded();
   const petAfter = await pet.boundingBox(); assert.ok(Math.abs(petBefore.y-petAfter.y)<1);
+  await page.mouse.move(petAfter.x+40,petAfter.y+35); await page.mouse.down(); await page.mouse.move(petAfter.x-80,petAfter.y-65,{steps:15}); await page.mouse.up();
+  const moved = await pet.boundingBox(); assert.ok(moved.x < petAfter.x-70 && moved.y < petAfter.y-50,'Pet can be dragged');
+  await snapshot('pet-moved');
 
   await click('Open view menu'); await page.getByRole('radio',{name:'Weekly',exact:true}).click(); await page.getByText('WEEKLY AVERAGE LOAD',{exact:true}).waitFor();
   await click('Open view menu'); await click('Assignments'); await page.getByText('Your assignments',{exact:true}).waitFor();
@@ -59,16 +70,16 @@ const server = http.createServer((req,res) => { const file = path.join(root, dec
   const upload = page.waitForEvent('filechooser'); await click('Upload learning materials'); await (await upload).setFiles([{name:'week1.txt',mimeType:'text/plain',buffer:Buffer.from('Queue: First in, first out.\nTree: A hierarchy of nodes.')},{name:'week2.txt',mimeType:'text/plain',buffer:Buffer.from('Graph: Vertices joined by edges.')}]);
   await page.getByText(/2 materials added with 3 cards/).waitFor();
   await page.getByRole('radio',{name:'Topic',exact:true}).click(); await snapshot('flashcards');
-  await page.reload(); await click('Continue saved plan'); await page.getByRole('button',{name:'Open view menu',exact:true}).waitFor();
+  await page.reload(); await reopen(); await page.getByRole('button',{name:'Open view menu',exact:true}).waitFor();
   const persisted = await page.evaluate(()=>JSON.parse(localStorage.getItem('margin-planner-v2')));
   assert.equal(persisted.commitments.length,4); assert.equal(persisted.materials.length,3); assert.equal(persisted.modules.length,2);
   await page.evaluate(()=>{ const saved=JSON.parse(localStorage.getItem('margin-planner-v2')); const d=new Date();d.setDate(d.getDate()-1); saved.registeredOn=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; localStorage.setItem('margin-planner-v2',JSON.stringify(saved)); });
-  await page.reload(); await click('Continue saved plan'); await page.getByText('A moment for yourself',{exact:true}).waitFor(); await snapshot('checkin-top');
+  await page.reload(); await reopen(); await page.getByText('A moment for yourself',{exact:true}).waitFor(); await snapshot('checkin-top');
   await page.getByRole('radio',{name:'Yes',exact:true}).first().click(); await page.getByRole('checkbox',{name:'Data Structures',exact:true}).click();
   await page.getByRole('textbox',{name:'Daily diary (optional)',exact:true}).fill('I feel ready for today.'); await snapshot('checkin'); await click('Save & open Plan');
   await page.getByRole('tab',{name:'Dashboard',exact:true}).click(); await page.getByText('1 day',{exact:true}).waitFor();
   await page.getByRole('tab',{name:'Recover',exact:true}).click(); await page.getByRole('button',{name:'I’ve done this',exact:true}).first().click(); await page.getByRole('radio',{name:'Better',exact:true}).click(); await snapshot('recovery');
-  await page.reload(); await click('Continue saved plan'); await page.getByRole('button',{name:'Update',exact:true}).waitFor();
+  await page.reload(); await reopen(); await page.getByRole('button',{name:'Update',exact:true}).waitFor();
   assert.equal(await page.getByText('A moment for yourself',{exact:true}).count(),0);
   await page.getByRole('tab',{name:'Plan',exact:true}).click();
   await click('Add commitment for this day');
@@ -86,7 +97,11 @@ const server = http.createServer((req,res) => { const file = path.join(root, dec
   await page.getByRole('textbox',{name:'Commitment name',exact:true}).fill('Undated club visit');
   await page.getByRole('checkbox',{name:'Set up later',exact:true}).click();
   assert.equal(await page.getByText('When will you need it? Start date',{exact:true}).count(),0);
-  await click('Add & continue'); await click('Set dates for Undated club visit');
+  await click('Add & continue');
+  await click('Plan options for Undated club visit'); assert.equal(await page.getByRole('radio',{name:'Make it lighter',exact:true}).count(),1);
+  await page.getByRole('radio',{name:'Skip this time',exact:true}).click(); await click('Apply to this commitment');
+  assert.equal((await page.evaluate(()=>JSON.parse(localStorage.getItem('margin-planner-v2')).commitments.find(c=>c.name==='Undated club visit'))).startDate,undefined);
+  await click('Set dates for Undated club visit');
   await page.getByRole('checkbox',{name:'Set up later',exact:true}).click();
   await page.getByRole('radio',{name:'2 weeks',exact:true}).click();
   for (const day of ['Sun','Tue','Thu','Sat']) await page.getByRole('checkbox',{name:day,exact:true}).click();
@@ -96,10 +111,19 @@ const server = http.createServer((req,res) => { const file = path.join(root, dec
   const repeating = updated.commitments.find(c=>c.name==='Undated club visit');
   assert.deepEqual(repeating.weekdays,[1,3,5]); assert.ok(repeating.endDate > repeating.startDate);
   assert.equal(updated.commitments.filter(c=>c.name==='Everyday stretch').length,1);
-  await page.reload(); await click('Continue saved plan'); await page.getByRole('button',{name:'Open view menu',exact:true}).waitFor();
+  await page.reload(); await reopen(); await page.getByRole('button',{name:'Open view menu',exact:true}).waitFor();
   assert.equal((await page.evaluate(()=>JSON.parse(localStorage.getItem('margin-planner-v2')).commitments.find(c=>c.name==='Undated club visit'))).endDate,repeating.endDate);
   await page.reload(); await click('Build my week'); await page.getByRole('checkbox',{name:'Classes / lectures',exact:true}).waitFor();
   assert.equal((await page.evaluate(()=>JSON.parse(localStorage.getItem('margin-planner-v2')).commitments)).length,6);
+  await page.evaluate(() => {
+    const saved=JSON.parse(localStorage.getItem('margin-planner-v2'));
+    const d=new Date();const date=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    saved.commitments=[{id:'energy-test',name:'High-load test',category:'Personal',startDate:date,schedule:date,time:1000,mental:1000,physical:1000,social:1000,flexibility:'Fixed'}];
+    saved.recoveryResults={}; localStorage.setItem('margin-planner-v2',JSON.stringify(saved));
+  });
+  await page.reload(); await reopen();
+  await page.getByLabel("Today's energy, 0 out of 100 left. A little rest would help.",{exact:true}).waitFor();
+  await snapshot('low-energy');
   assert.deepEqual(errors,[]); console.log('PASS: default routine, adaptive limits, ICS import, assignment setup, add-another, first-day check-in suppression, menus, skip/restore, bulk flashcards, persistence, next-day check-in, streak and recovery feedback.');
  } catch(e) { await snapshot('failure'); console.error((await page.locator('body').innerText()).slice(-9000)); throw e; }
  finally { await browser.close(); server.close(); }
