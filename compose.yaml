@@ -7,7 +7,7 @@ services:
       POSTGRES_PASSWORD: app
       POSTGRES_DB: app
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -23,10 +23,19 @@ services:
       DATABASE_URL: postgresql+psycopg://app:app@postgres:5432/app
       CORS_ORIGINS: http://localhost:8081,http://localhost:19006
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
+    command: ["sh", "-c", "alembic upgrade head && exec uvicorn app.main:app --host 0.0.0.0 --port 8000"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/ready', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - material_data:/app/data/materials
     depends_on:
       postgres:
         condition: service_healthy
 
 volumes:
   postgres_data:
+  material_data:
