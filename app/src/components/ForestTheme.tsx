@@ -45,8 +45,10 @@ export function ForestPool({ level = 65, height = 200 }: { level?: number; heigh
 
 export function ForestFloor() {
   return <Svg pointerEvents="none" style={StyleSheet.absoluteFill} width="100%" height="100%" viewBox="0 0 440 100" preserveAspectRatio="none" accessibilityElementsHidden>
-    <Path d="M0 19c18-13 29 2 46-10 18-12 31 5 49-2 28-11 48 7 77 1 35-8 44 12 78 4 31-8 54 4 77-5 26-10 45 11 65 3 19-8 32 4 48 8v82H0Z" fill="#153C2D" />
-    {Array.from({ length: 18 }, (_, i) => <Path key={i} d={`M${i*26} 23q${i%2?-4:5} -12 2 -20`} stroke="#76945E" strokeWidth={2} strokeLinecap="round" />)}
-    <Path d="M13 50q54 32 105 2t97 10q55 30 110-5t102-1" stroke="#8D754F" strokeWidth={2} fill="none" opacity={0.4} />
+    <Rect width={440} height={100} fill={colors.soil} />
+    <Path d="M0 20c18-13 29 2 46-10 18-12 31 5 49-2 28-11 48 7 77 1 35-8 44 12 78 4 31-8 54 4 77-5 26-10 45 11 65 3 19-8 32 4 48 8v19H0Z" fill={colors.forest} />
+    <Path d="M0 30c51-8 84 6 126-2s74 7 119 0 85 7 126-1 53 2 69 7" stroke="#8D6540" strokeWidth={3} fill="none" opacity={0.7} />
+    {Array.from({ length: 20 }, (_, i) => <Path key={i} d={`M${i*23} 25q${i%2?-5:6} -15 ${i%3?2:-2} -24`} stroke={i%3 ? colors.leaf : colors.moss} strokeWidth={3} strokeLinecap="round" />)}
+    <Path d="M13 63q54 20 105 2t97 8q55 19 110-4t102-1" stroke={colors.soilDark} strokeWidth={2} fill="none" opacity={0.45} />
   </Svg>;
 }

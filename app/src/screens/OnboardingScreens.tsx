@@ -17,7 +17,7 @@ import {
   SectionLabel,
   SegmentedChoices,
 } from "@/components/MarginUI";
-import { LeafIllustration } from "@/components/EnergyLeaf";
+import { WelcomeLeafScene } from "@/components/EnergyLeaf";
 import { MarginIcon } from "@/components/MarginIcon";
 import {
   CapacityKind,
@@ -41,10 +41,10 @@ export function WelcomeScreen({ onStart }: { onStart: () => void }) {
   return (
     <ScrollPage plain contentStyle={styles.welcomePage}>
       <View style={styles.welcomeHero}>
-        <View style={{ width: "100%", maxWidth: 270 }}><LeafIllustration energy={100} height={240} /></View>
+        <WelcomeLeafScene />
         <Text style={styles.brandName}>SANTAI</Text>
-        <Text accessibilityRole="header" style={styles.display}>Know the cost{"\n"}before you say yes.</Text>
-        <Text style={styles.lead}>A weekly capacity planner for classes, clubs, work, and the rest of your life.</Text>
+        <Text accessibilityRole="header" style={styles.display}>Make room for{"\n"}what matters.</Text>
+        <Text style={styles.lead}>See what your week asks of you, protect your recovery, and choose the next step with clarity.</Text>
       </View>
       <View style={styles.welcomeFooter}>
         <AppButton text="Build my week" onPress={onStart} />
@@ -186,7 +186,7 @@ export { ImportTimetableScreen } from "./TimetableScreen";
 
 export type CommitmentDraft = Omit<Commitment, "id" | "time" | "mental" | "physical" | "social"> & { time: number; mental: number; physical: number; social: number };
 
-export function CommitmentForm({ eyebrow, title, body, initial, submitText, onBack, onSubmit, secondaryAction, onAddAnother, defaultDate }: { eyebrow: string; title: string; body: string; initial?: Commitment; submitText: string; onBack: () => void; onSubmit: (commitment: Commitment) => void; secondaryAction?: { text: string; onPress: () => void }; onAddAnother?: (commitment: Commitment) => void; defaultDate?: string }) {
+export function CommitmentForm({ eyebrow, title, body, initial, submitText, onBack, onSubmit, secondaryAction, returnAction, onAddAnother, defaultDate }: { eyebrow: string; title: string; body: string; initial?: Commitment; submitText: string; onBack: () => void; onSubmit: (commitment: Commitment) => void; secondaryAction?: { text: string; onPress: () => void }; returnAction?: { text: string; onPress: () => void }; onAddAnother?: (commitment: Commitment) => void; defaultDate?: string }) {
   const [name, setName] = useState(initial?.name ?? "");
   const [category, setCategory] = useState(initial?.category ?? "Personal");
   const [scheduleType, setScheduleType] = useState<NonNullable<Commitment["scheduleType"]>>(initial?.scheduleType ?? "Fixed");
@@ -198,14 +198,23 @@ export function CommitmentForm({ eyebrow, title, body, initial, submitText, onBa
   const [dueDate, setDueDate] = useState(initial?.dueDate ?? "");
   const [duration, setDuration] = useState(initial?.durationHours ?? 1);
   const [savedNotice, setSavedNotice] = useState("");
-  const [impact, setImpact] = useState({ mental: Math.min(5, Math.round((initial?.mental ?? 15) / 5)), physical: Math.min(5, Math.round((initial?.physical ?? 5) / 5)), social: Math.min(5, Math.round((initial?.social ?? 10) / 5)) });
+  const [effort, setEffort] = useState(Math.max(1, Math.min(5, Math.round(Math.max(initial?.mental ?? 15, initial?.physical ?? 5, initial?.social ?? 10) / 5))));
   const legacy = !!initial && (initial.category === "Assignment" || initial.category === "Class" || !!initial.routineId);
   const dated = legacy || (scheduleType === "Fixed" && !later);
   const deadlineAllowed = category === "Assignment" || category === "Competition";
   const dates = Array.from({ length: range }, (_, i) => shiftDate(startDate, i)).filter(date => range === 1 || weekdays.includes(fromKey(date).getDay()));
   const invalid = !name.trim() || (dated && (!startDate || !dates.length || (deadlineAllowed && !!dueDate && dueDate < shiftDate(startDate, range - 1))));
-  const draft = (): Commitment => ({ ...initial, id: initial?.id ?? createCommitmentId(name), name: name.trim(), category, scheduleType: legacy ? undefined : scheduleType, startDate: dated ? startDate : scheduleType === "Daily routine" ? initial?.startDate ?? dateKey() : undefined, endDate: dated && !legacy ? shiftDate(startDate, range - 1) : undefined, weekdays: dated && range > 1 ? weekdays : undefined, dueDate: dated && deadlineAllowed ? dueDate || undefined : undefined, schedule: dated ? `${prettyDate(startDate)}${range > 1 ? ` · ${range} days` : ""}` : scheduleType === "Daily routine" ? "Every day" : "Set up later", flexibility: legacy ? flexibility : scheduleType === "Fixed" ? "Fixed" : "Flexible", durationHours: duration, time: duration * 5, mental: impact.mental * 5, physical: impact.physical * 5, social: impact.social * 5 });
+  const estimatedLoads = () => {
+    const mix: Record<string, { mental: number; physical: number; social: number }> = {
+      Competition: { mental: 1, physical: 0.45, social: 0.65 }, Club: { mental: 0.65, physical: 0.25, social: 0.85 }, Job: { mental: 0.7, physical: 0.65, social: 0.65 }, Sport: { mental: 0.3, physical: 1, social: 0.35 }, Social: { mental: 0.35, physical: 0.2, social: 1 }, Personal: { mental: 0.55, physical: 0.35, social: 0.25 }, Assignment: { mental: 1, physical: 0.05, social: 0.05 }, Class: { mental: 0.85, physical: 0.1, social: 0.35 }, Routine: { mental: 0.6, physical: 0.4, social: 0.35 },
+    };
+    const selected = mix[category] ?? mix.Personal;
+    return { mental: Math.round(effort * 5 * selected.mental), physical: Math.round(effort * 5 * selected.physical), social: Math.round(effort * 5 * selected.social) };
+  };
+  const loads = estimatedLoads();
+  const draft = (): Commitment => ({ ...initial, id: initial?.id ?? createCommitmentId(name), name: name.trim(), category, scheduleType: legacy ? undefined : scheduleType, startDate: dated ? startDate : scheduleType === "Daily routine" ? initial?.startDate ?? dateKey() : undefined, endDate: dated && !legacy ? shiftDate(startDate, range - 1) : undefined, weekdays: dated && range > 1 ? weekdays : undefined, dueDate: dated && deadlineAllowed ? dueDate || undefined : undefined, schedule: dated ? `${prettyDate(startDate)}${range > 1 ? ` · ${range} days` : ""}` : scheduleType === "Daily routine" ? "Every day" : "Set up later", flexibility: legacy ? flexibility : scheduleType === "Fixed" ? "Fixed" : "Flexible", durationHours: duration, time: duration * 5, ...loads });
   return <ScrollPage><PageHeader eyebrow={eyebrow} title={title} body={body} onBack={onBack} /><View style={s.content}>
+    {returnAction ? <AppButton text={returnAction.text} variant="quiet" icon="calendar" onPress={returnAction.onPress} /> : null}
     {savedNotice ? <InlineNotice title="Commitment added" body={savedNotice} /> : null}
     {initial?.scheduleType && <Text style={s.bodySmallMuted}>Editing changes the whole commitment and resets any individual-day adjustments. To change just one day, use its Plan options instead.</Text>}
     <FormField label="Commitment name" value={name} onChangeText={setName} placeholder="e.g. Hackathon practice" />
@@ -215,8 +224,8 @@ export function CommitmentForm({ eyebrow, title, body, initial, submitText, onBa
     {dated && <><DateField label={legacy ? "When will you do it?" : "When will you need it? Start date"} value={startDate} onChange={setStartDate} />{!legacy && <><SegmentedChoices label="For how long?" choices={["One day", "1 week", "2 weeks", "4 weeks"]} selected={range === 1 ? "One day" : range === 7 ? "1 week" : range === 14 ? "2 weeks" : range === 28 ? "4 weeks" : ""} onSelect={value => setRange(value === "One day" ? 1 : parseInt(value) * 7)} /><Text style={s.body}>{prettyDate(startDate)}{range > 1 ? ` – ${prettyDate(shiftDate(startDate, range - 1))}` : ""}</Text>{range > 1 && <><SectionLabel>Which days will you commit?</SectionLabel><View style={s.wrapRow}>{["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day, i) => <CheckboxRow key={day} label={day} selected={weekdays.includes(i)} onPress={() => setWeekdays(current => current.includes(i) ? current.filter(v => v !== i) : [...current, i])} />)}</View>{!dates.length && <Text accessibilityRole="alert" style={s.body}>Choose at least one day.</Text>}</>}</>}{deadlineAllowed && <DateField label={category === "Competition" ? "Submission deadline (only if required)" : "Due date (optional)"} value={dueDate} onChange={setDueDate} optional />}{deadlineAllowed && dueDate && dueDate < shiftDate(startDate, range - 1) ? <Text accessibilityRole="alert" style={s.body}>Your deadline must be on or after your last planned day.</Text> : null}</>}
     {!dated && <Text style={s.bodySmallMuted}>{scheduleType === "Daily routine" ? "Repeats every day from today. No dates to fill in. Edit it in Plan or Schedule." : "Saved under Set up later in Plan and Schedule. It will not count towards a day's load until you choose dates."}</Text>}
     <ValueSlider label="Time needed" min={0.25} max={8} step={0.25} suffix=" hours" value={duration} onChange={setDuration} />
-    <SectionLabel>Energy needed</SectionLabel><Text style={s.bodySmallMuted}>0 = no effort · 5 = very demanding</Text>
-    {(["mental", "physical", "social"] as const).map(kind => <ValueSlider key={kind} label={kind === "social" ? "Social (effort spent interacting with others)" : capacityMeta[kind].label} value={impact[kind]} onChange={value => setImpact(current => ({ ...current, [kind]: value }))} />)}
+    <ValueSlider label="Total effort needed" min={1} max={5} step={1} suffix=" / 5" value={effort} onChange={setEffort} />
+    <Card tone="mint" style={{ gap: 5 }}><Text style={s.eyebrow}>SANTAI’S ESTIMATE</Text><Text style={s.bodySmall}>Mental {loads.mental} · Physical {loads.physical} · Social {loads.social}</Text><Text style={s.caption}>Estimated from the category and your one effort rating. You can still adjust the plan later.</Text></Card>
     <AppButton text={submitText} disabled={invalid} onPress={() => onSubmit(draft())} />
     {!initial && onAddAnother ? <AppButton text="Add & add another commitment" variant="secondary" disabled={invalid} onPress={() => { onAddAnother(draft()); setSavedNotice(name.trim() + " is saved. Add your next commitment below."); setName(""); setDueDate(""); }} /> : null}
     {secondaryAction ? <AppButton text={secondaryAction.text} variant="quiet" onPress={secondaryAction.onPress} /> : null}
@@ -227,15 +236,15 @@ export function AddCommitmentOnboardingScreen({ onBack, onContinue }: { onBack: 
   return <CommitmentForm eyebrow="Add manually" title="Add one commitment" body="Add a named deadline, shift, event, or competition. Your routine is already counted." submitText="Add and continue" onBack={onBack} onSubmit={onContinue} />;
 }
 
-export function AnythingElseScreen({ initialNote, onBack, onContinue }: { initialNote: string; onBack: () => void; onContinue: (note: string) => void }) {
+export function AnythingElseScreen({ initialNote, onBack, onContinue, standalone = false }: { initialNote: string; onBack: () => void; onContinue: (note: string) => void; standalone?: boolean }) {
   const [note, setNote] = useState(initialNote);
   return (
     <ScrollPage>
-      <PageHeader eyebrow="Optional context" title="Anything else about this week?" body="Keep a note for yourself. You can add any extra plans through Add Commitment." onBack={onBack} />
+      <PageHeader eyebrow={standalone ? "Your profile" : "Optional context"} title={standalone ? "Update your weekly note" : "Anything else about this week?"} body={standalone ? "Pin one useful piece of context to your dashboard for this week." : "Keep a note for yourself. You can add any extra plans through Add Commitment."} onBack={onBack} />
       <View style={s.content}>
         <FormField label="Weekly context" value={note} onChangeText={setNote} placeholder="e.g. I help at home most Sunday mornings…" multiline />
-        <AppButton text="Build my plan" onPress={() => onContinue(note.trim())} />
-        <Text style={styles.centerCaption}>This step is optional; leaving it blank adds nothing.</Text>
+        <AppButton text={standalone ? "Save weekly note" : "Build my plan"} onPress={() => onContinue(note.trim())} />
+        <Text style={styles.centerCaption}>{standalone ? "This note stays on your dashboard until you change it." : "This step is optional; leaving it blank adds nothing."}</Text>
       </View>
     </ScrollPage>
   );

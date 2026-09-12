@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { AccessibilityInfo, Animated, Easing, Text, View } from "react-native";
+import { AccessibilityInfo, Animated, Easing, Platform, Text, View } from "react-native";
 import Svg, { ClipPath, Defs, Ellipse, G, LinearGradient, Path, Stop } from "react-native-svg";
 import { colors, fonts } from "@/theme/tokens";
 
@@ -13,8 +13,8 @@ export function LeafIllustration({ energy, height = 230 }: { energy: number; hei
       loop?.stop(); breeze.setValue(0);
       if (!active || reduced) return;
       loop = Animated.loop(Animated.sequence([
-        Animated.timing(breeze, { toValue: 1, duration: 2400, easing: Easing.inOut(Easing.sin), useNativeDriver: true, isInteraction: false }),
-        Animated.timing(breeze, { toValue: -1, duration: 2800, easing: Easing.inOut(Easing.sin), useNativeDriver: true, isInteraction: false }),
+        Animated.timing(breeze, { toValue: 1, duration: 2400, easing: Easing.inOut(Easing.sin), useNativeDriver: Platform.OS !== "web", isInteraction: false }),
+        Animated.timing(breeze, { toValue: -1, duration: 2800, easing: Easing.inOut(Easing.sin), useNativeDriver: Platform.OS !== "web", isInteraction: false }),
       ]));
       loop.start();
     };
@@ -53,5 +53,37 @@ export function EnergyLeaf({ energy }: { energy: number }) {
       <View style={{ position: "absolute", right: -12, top: -12, width: "46%" }}><LeafIllustration energy={value} height={224} /></View>
     </View>
     <Text style={{ fontFamily: fonts.regular, fontSize: 14, lineHeight: 21, color: colors.mint }}>Your leaf droops as energy runs low.</Text>
+  </View>;
+}
+
+function LeafAccent({ size, color }: { size: number; color: string }) {
+  return <Svg width={size} height={size} viewBox="0 0 40 40" accessibilityElementsHidden><Path d="M5 31C7 13 17 5 35 5c-1 18-11 28-29 29 8-7 15-14 22-22" fill={color} stroke="#DDE49C" strokeWidth={1.2} strokeLinecap="round" /></Svg>;
+}
+
+/** A more playful first impression built from the same leaf language as the dashboard. */
+export function WelcomeLeafScene() {
+  const [drift] = useState(() => new Animated.Value(0));
+  useEffect(() => {
+    let active = true;
+    let loop: Animated.CompositeAnimation | undefined;
+    const update = (reduced: boolean) => {
+      loop?.stop(); drift.setValue(0);
+      if (!active || reduced) return;
+      loop = Animated.loop(Animated.sequence([
+        Animated.timing(drift, { toValue: 1, duration: 3000, easing: Easing.inOut(Easing.sin), useNativeDriver: Platform.OS !== "web", isInteraction: false }),
+        Animated.timing(drift, { toValue: -1, duration: 3600, easing: Easing.inOut(Easing.sin), useNativeDriver: Platform.OS !== "web", isInteraction: false }),
+      ]));
+      loop.start();
+    };
+    AccessibilityInfo.isReduceMotionEnabled().then(update).catch(() => update(true));
+    const subscription = AccessibilityInfo.addEventListener("reduceMotionChanged", update);
+    return () => { active = false; loop?.stop(); subscription.remove(); };
+  }, [drift]);
+  const float = drift.interpolate({ inputRange: [-1, 1], outputRange: [8, -8] });
+  return <View pointerEvents="none" style={{ width: "100%", maxWidth: 320, height: 250 }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+    <Animated.View style={{ position: "absolute", inset: 0, transform: [{ translateY: float }] }}><LeafIllustration energy={100} height={250} /></Animated.View>
+    <Animated.View style={{ position: "absolute", left: 14, top: 50, transform: [{ translateY: drift.interpolate({ inputRange: [-1, 1], outputRange: [-5, 9] }) }, { rotate: "-18deg" }] }}><LeafAccent size={34} color="#91B85B" /></Animated.View>
+    <Animated.View style={{ position: "absolute", right: 12, top: 24, transform: [{ translateY: drift.interpolate({ inputRange: [-1, 1], outputRange: [7, -10] }) }, { rotate: "32deg" }] }}><LeafAccent size={27} color="#74B9AF" /></Animated.View>
+    <Animated.View style={{ position: "absolute", right: 52, bottom: 16, transform: [{ translateY: drift.interpolate({ inputRange: [-1, 1], outputRange: [-8, 5] }) }, { rotate: "105deg" }] }}><LeafAccent size={22} color="#C4CE76" /></Animated.View>
   </View>;
 }

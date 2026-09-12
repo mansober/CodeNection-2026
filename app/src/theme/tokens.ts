@@ -24,6 +24,13 @@ export const colors = {
   waterBright: "#B6E3D5",
   waterDeep: "#2D7B72",
   moss: "#76945E",
+  fern: "#4F7E4E",
+  leaf: "#91B85B",
+  soil: "#6B4A2C",
+  soilDark: "#4B321F",
+  sky: "#DCE9D0",
+  lavender: "#E7E2F2",
+  peach: "#F4DCCF",
   transparent: "transparent",
 } as const;
 

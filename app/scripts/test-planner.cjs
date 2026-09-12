@@ -45,4 +45,15 @@ assert.equal(p.scheduledCommitments([daily], '2026-09-11').length, 0);
 assert.equal(p.scheduledCommitments([daily], '2026-09-13')[0].routineId, 'daily-commitment');
 assert.equal(p.scheduledCommitments([daily], '2027-01-01').length, 1);
 assert.equal(p.routinePlan(entries, [{ id: 'manual', name: 'Manual module', days: [] }], '2026-09-07').filter(i => i.routineId === 'classes').length, 1);
-console.log('Scheduling checks passed: multiple weekdays, inclusive range bounds, distinct occurrences, unscheduled load exclusion, daily recurrence, manual module baseline.');
+const capacities = (time, mental, physical, social) => [
+  { kind: 'time', used: time, limit: 100 },
+  { kind: 'mental', used: mental, limit: 100 },
+  { kind: 'physical', used: physical, limit: 100 },
+  { kind: 'social', used: social, limit: 100 },
+];
+assert.deepEqual(p.rankedRecoveryOptions(capacities(98, 80, 40, 30)).options.map(option => option.id), ['plan']);
+assert.deepEqual(p.rankedRecoveryOptions(capacities(95, 100, 40, 30)).options.map(option => option.id), ['plan']);
+assert.ok(p.rankedRecoveryOptions(capacities(50, 95, 90, 20)).options.every(option => !option.costs?.includes('physical')));
+assert.ok(p.rankedRecoveryOptions(capacities(50, 90, 30, 95)).options.every(option => !option.costs?.includes('social')));
+assert.deepEqual(p.rankedRecoveryOptions(capacities(45, 60, 35, 95)).options.slice(0, 3).map(option => option.id), ['alone', 'solo-hobby', 'solo-game']);
+console.log('Scheduling and recovery checks passed: recurrence, unscheduled load exclusion, overload ranking, and physical/social/time guardrails.');

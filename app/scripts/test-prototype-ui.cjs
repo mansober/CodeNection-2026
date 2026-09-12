@@ -52,7 +52,7 @@ const server = http.createServer((req,res) => { const file = path.join(root, dec
   const pet = page.getByRole('button',{name:'Your streak pet, 0 days',exact:true});
   const petBefore = await pet.boundingBox(); const nav = await page.getByRole('tab',{name:'Recover',exact:true}).boundingBox();
   assert.ok(petBefore.y + petBefore.height <= nav.y);
-  await pet.click(); await page.getByText(/I’m here to keep you company/).waitFor(); await pet.click();
+  await pet.click(); await page.getByText(/Small steps still count|Leave a little room|Rest protects|One clear next step|You can let one thing|A gentler plan/).waitFor(); await pet.click();
   await page.getByText('TODAY’S LOAD',{exact:true}).scrollIntoViewIfNeeded();
   const petAfter = await pet.boundingBox(); assert.ok(Math.abs(petBefore.y-petAfter.y)<1);
   await page.mouse.move(petAfter.x+40,petAfter.y+35); await page.mouse.down(); await page.mouse.move(petAfter.x-80,petAfter.y-65,{steps:15}); await page.mouse.up();
@@ -61,7 +61,7 @@ const server = http.createServer((req,res) => { const file = path.join(root, dec
 
   await click('Open view menu'); await page.getByRole('radio',{name:'Weekly',exact:true}).click(); await page.getByText('WEEKLY AVERAGE LOAD',{exact:true}).waitFor();
   await click('Open view menu'); await click('Assignments'); await page.getByText('Your assignments',{exact:true}).waitFor();
-  await click('Open view menu'); await page.getByRole('radio',{name:'Daily',exact:true}).click();
+  await page.getByRole('button',{name:'Go back',exact:true}).click(); await click('Open view menu'); await page.getByRole('radio',{name:'Daily',exact:true}).click();
   await page.getByRole('tab',{name:'Plan',exact:true}).click();
   await page.getByRole('button',{name:/Hackathon team meeting/}).click(); await page.getByRole('radio',{name:'Skip this time',exact:true}).click(); await click('Apply to this commitment');
   await page.getByRole('button',{name:/Hackathon team meeting/}).click(); await page.getByRole('radio',{name:'Keep as planned',exact:true}).click(); await click('Apply to this commitment'); await snapshot('plan');
@@ -74,21 +74,20 @@ const server = http.createServer((req,res) => { const file = path.join(root, dec
   await page.getByRole('button',{name:/Confirm & add commitment|Add with this load/}).click();
   await page.getByRole('button',{name:/Hypothetical design sprint/}).waitFor();
   await page.getByRole('tab',{name:'Dashboard',exact:true}).click(); await click('Open daily flashcards');
-  await page.getByRole('textbox',{name:'Question or term',exact:true}).fill('What is a stack?'); await page.getByRole('textbox',{name:'Answer',exact:true}).fill('Last in, first out.'); await click('Save flashcard');
-  await page.getByRole('button',{name:/Question: What is a stack/}).click(); await page.getByText('Last in, first out.',{exact:true}).waitFor();
   const upload = page.waitForEvent('filechooser'); await click('Upload learning materials'); await (await upload).setFiles([{name:'week1.txt',mimeType:'text/plain',buffer:Buffer.from('Queue: First in, first out.\nTree: A hierarchy of nodes.')},{name:'week2.txt',mimeType:'text/plain',buffer:Buffer.from('Graph: Vertices joined by edges.')}]);
   await page.getByText(/2 materials added with 3 cards/).waitFor();
+  await page.getByRole('button',{name:/Question: Queue/}).click(); await page.getByText('First in, first out.',{exact:true}).waitFor();
   await page.getByRole('radio',{name:'Topic',exact:true}).click(); await snapshot('flashcards');
   await page.reload(); await reopen(); await page.getByRole('button',{name:'Open view menu',exact:true}).waitFor();
   const persisted = await page.evaluate(()=>JSON.parse(localStorage.getItem('margin-planner-v2')));
-  assert.equal(persisted.commitments.length,4); assert.equal(persisted.materials.length,3); assert.equal(persisted.modules.length,2);
+  assert.equal(persisted.commitments.length,4); assert.equal(persisted.materials.length,2); assert.equal(persisted.modules.length,2);
   await page.evaluate(()=>{ const saved=JSON.parse(localStorage.getItem('margin-planner-v2')); const d=new Date();d.setDate(d.getDate()-1); saved.registeredOn=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; localStorage.setItem('margin-planner-v2',JSON.stringify(saved)); });
-  await page.reload(); await reopen(); await page.getByText('A moment for yourself',{exact:true}).waitFor(); await snapshot('checkin-top');
+  await page.reload(); await reopen(); await page.getByRole('button',{name:'Complete today’s check-in',exact:true}).click(); await page.getByText('A moment for yourself',{exact:true}).waitFor(); await snapshot('checkin-top');
   await page.getByRole('radio',{name:'Yes',exact:true}).first().click(); await page.getByRole('checkbox',{name:'Data Structures',exact:true}).click();
   await page.getByRole('textbox',{name:'Daily diary (optional)',exact:true}).fill('I feel ready for today.'); await snapshot('checkin'); await click('Save & open Plan');
   await page.getByRole('tab',{name:'Dashboard',exact:true}).click(); await page.getByText('1 day',{exact:true}).waitFor();
   await page.getByRole('tab',{name:'Recover',exact:true}).click(); await page.getByRole('button',{name:'I’ve done this',exact:true}).first().click(); await page.getByRole('radio',{name:'Better',exact:true}).click(); await snapshot('recovery');
-  await page.reload(); await reopen(); await page.getByRole('button',{name:'Update',exact:true}).waitFor();
+  await page.reload(); await reopen(); await page.getByRole('button',{name:'Update today’s check-in',exact:true}).waitFor();
   assert.equal(await page.getByText('A moment for yourself',{exact:true}).count(),0);
   await page.getByRole('tab',{name:'Plan',exact:true}).click();
   await click('Add commitment for this day');

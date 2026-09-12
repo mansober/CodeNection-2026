@@ -1,9 +1,18 @@
-import { CapacityKind, Commitment, DailyCheckIn, RoutineEntry, capacityMeta, routineCatalog } from "./margin";
+import { CapacityKind, CapacityValue, Commitment, DailyCheckIn, RoutineEntry, capacityMeta, routineCatalog } from "./margin";
 
 export type Module = { id: string; name: string; days: number[]; assignment?: { start: string; due: string } };
 export type FlashCard = { id: string; question: string; answer: string };
 export type Material = { id: string; moduleId: string; name: string; topic: string; week: string; date: string; uri: string; cards: FlashCard[] };
 export type RecoveryResult = { done: boolean; feeling?: string };
+export type RecoveryOption = {
+  id: string;
+  title: string;
+  duration: string;
+  detail: string;
+  evidence?: string;
+  supports: CapacityKind[];
+  costs?: CapacityKind[];
+};
 export const dateKey = (date = new Date()) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 export const fromKey = (value: string) => new Date(`${value}T12:00:00`);
 export const shiftDate = (value: string, days: number) => { const d = fromKey(value); d.setDate(d.getDate() + days); return dateKey(d); };
@@ -74,6 +83,53 @@ export function loadFor(items: Commitment[], answers: Partial<Record<CapacityKin
   });
 }
 export const loadPercent = (values: ReturnType<typeof loadFor>) => Math.round(Math.max(0, ...values.map(v => v.used / v.limit * 100)));
+
+export const recoveryLibrary: RecoveryOption[] = [
+  { id: "outside", title: "Go outside", duration: "20–30 min", detail: "Sit somewhere green or take an easy stroll. Keep the pace genuinely gentle.", evidence: "Outdoor time is associated with lower cortisol; your research notes about 21.3% per hour.", supports: ["mental"], costs: ["time", "physical"] },
+  { id: "mastery", title: "Do a mastery hobby", duration: "30 min+", detail: "Choose a hobby that feels absorbing and gives you a small sense of progress.", evidence: "Strongest mental-recovery type in your research.", supports: ["mental"], costs: ["time"] },
+  { id: "game", title: "Play an absorbing game", duration: "30–60 min", detail: "Pick something immersive with a clear stopping point.", supports: ["mental"], costs: ["time"] },
+  { id: "awe", title: "Take an awe walk", duration: "15 min", detail: "Walk slowly and notice something larger than your current task list.", supports: ["mental"], costs: ["time", "physical"] },
+  { id: "microbreak", title: "Take a micro-break", duration: "Under 10 min", detail: "Step away, unfocus your eyes and let fatigue settle. Best when only a small pause fits.", evidence: "Small effect; mainly useful for fatigue.", supports: ["mental"], costs: ["time"] },
+  { id: "plan", title: "Write the next-task plan", duration: "5 min", detail: "Write exactly when and where you will continue the unfinished task.", evidence: "Helps stop unfinished work from intruding on the rest of your day.", supports: ["mental", "time"], costs: ["time"] },
+  { id: "support", title: "Talk to someone supportive", duration: "10–20 min", detail: "Choose someone who helps you feel understood, not someone who needs energy from you.", supports: ["mental"], costs: ["time", "social"] },
+  { id: "sleep", title: "Protect consistent sleep", duration: "Tonight", detail: "Choose a realistic bedtime and protect it across the week.", supports: ["mental", "physical"], costs: ["time"] },
+  { id: "nap", title: "Take a short nap", duration: "15–25 min", detail: "Set an alarm before you lie down so the break stays restorative.", supports: ["mental", "physical"], costs: ["time"] },
+  { id: "nothing", title: "Rest with no task", duration: "10–20 min", detail: "Sit or lie down. No productivity target, workout or content queue.", supports: ["mental", "physical"], costs: ["time"] },
+  { id: "alone", title: "Choose some alone time", duration: "Any length", detail: "It only works when it is your choice. Protect a quiet pocket without messages.", supports: ["social"], costs: ["time"] },
+  { id: "solo-hobby", title: "Do a hobby alone", duration: "30 min+", detail: "Use the solo version of a hobby you already enjoy.", supports: ["social", "mental"], costs: ["time"] },
+  { id: "solo-game", title: "Play something solo", duration: "30–60 min", detail: "Choose an absorbing game without chat or group coordination.", supports: ["social", "mental"], costs: ["time"] },
+];
+
+export function rankedRecoveryOptions(capacities: CapacityValue[]): { focus: CapacityKind; options: RecoveryOption[]; timeOverloaded: boolean } {
+  const ratio = (kind: CapacityKind) => {
+    const value = capacities.find(v => v.kind === kind);
+    return value ? value.used / Math.max(1, value.limit) : 0;
+  };
+  const kinds = (Object.keys(capacityMeta) as CapacityKind[]).sort((a, b) => ratio(b) - ratio(a));
+  const focus = kinds[0] ?? "mental";
+  const timeOverloaded = ratio("time") >= 0.9;
+  const physicalOverloaded = ratio("physical") >= 0.8;
+  const socialOverloaded = ratio("social") >= 0.8;
+
+  if (timeOverloaded) {
+    return { focus, timeOverloaded, options: recoveryLibrary.filter(option => option.id === "plan") };
+  }
+
+  const safe = recoveryLibrary.filter(option => {
+    if (!option.supports.includes(focus)) return false;
+    if (physicalOverloaded && option.costs?.includes("physical")) return false;
+    if (socialOverloaded && option.costs?.includes("social")) return false;
+    return true;
+  });
+  const preferredOrder: Record<CapacityKind, string[]> = {
+    mental: ["outside", "mastery", "game", "awe", "plan", "microbreak", "support", "sleep", "nap", "nothing"],
+    physical: ["nothing", "nap", "sleep", "plan"],
+    social: ["alone", "solo-hobby", "solo-game", "nothing", "plan"],
+    time: ["plan", "microbreak"],
+  };
+  return { focus, timeOverloaded, options: safe.sort((a, b) => preferredOrder[focus].indexOf(a.id) - preferredOrder[focus].indexOf(b.id)) };
+}
+
 export function cardsFromText(text: string): FlashCard[] {
   return text.split(/\r?\n/).flatMap((line, index) => {
     const match = line.match(/^\s*(?:[-*]\s*)?(.{2,160}?)\s*(?::|\t)\s*(.{2,})$/);

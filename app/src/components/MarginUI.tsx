@@ -2,6 +2,7 @@ import { useContext, useState, type PropsWithChildren, type ReactNode } from "re
 import { StreakPet, StreakPetContext } from "./StreakPet";
 import {
   KeyboardAvoidingView,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -15,7 +16,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { capacityMeta, CapacityValue, MainTab } from "@/models/margin";
+import { MainTab, QuickAddAction } from "@/models/margin";
 import { colors, fonts, layout, type } from "@/theme/tokens";
 import { ForestBackdrop, ForestFloor, SantaiLogo } from "./ForestTheme";
 import { IconName, MarginIcon } from "@/components/MarginIcon";
@@ -51,7 +52,7 @@ export function ScrollPage({ children, bottomBar, contentStyle, plain }: PropsWi
     <PageShell bottomBar={bottomBar} plain={plain}>
       <ScrollView
         style={styles.flex}
-        contentContainerStyle={[styles.scrollContent, contentStyle, bottomBar && pet !== undefined ? { paddingBottom: 120 } : undefined]}
+        contentContainerStyle={[styles.scrollContent, contentStyle, bottomBar && pet !== undefined && !pet.hidden ? { paddingBottom: 120 } : undefined]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
@@ -207,31 +208,26 @@ export function SegmentedChoices({ label, choices, selected, onSelect }: { label
   );
 }
 
-export function ImpactSelector({ label, color, value, onChange }: { label: string; color: string; value: number; onChange: (value: number) => void }) {
-  return (
-    <View style={styles.impactRow}>
-      <View style={styles.impactLabelRow}>
-        <View style={[styles.dot, { backgroundColor: color }]} />
-        <Text style={styles.impactLabel}>{label}</Text>
-        <Text style={styles.impactValue}>{value}/5</Text>
-      </View>
-      <View style={styles.impactChoices}>
-        {[1, 2, 3, 4, 5].map((option) => (
-          <Pressable
-            key={option}
-            accessibilityRole="radio"
-            accessibilityLabel={`${label} impact ${option} of 5`}
-            accessibilityState={{ selected: option === value }}
-            aria-checked={option === value}
-            onPress={() => onChange(option)}
-            style={[styles.impactButton, option === value && { backgroundColor: color, borderColor: color }]}
-          >
-            <Text style={[styles.impactButtonText, option === value && styles.impactButtonTextSelected]}>{option}</Text>
-          </Pressable>
-        ))}
-      </View>
-    </View>
-  );
+export function ChoiceDropdown({ label, value, placeholder, options, onSelect }: { label: string; value: string; placeholder: string; options: { label: string; value: string; detail?: string }[]; onSelect: (value: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const selected = options.find(option => option.value === value);
+  return <View style={styles.fieldGroup}>
+    <Text style={styles.fieldLabel}>{label.toUpperCase()}</Text>
+    <Pressable accessibilityRole="button" accessibilityLabel={`${label}, ${selected?.label ?? placeholder}`} accessibilityState={{ expanded: open }} onPress={() => setOpen(true)} style={({ pressed }) => [styles.dropdownButton, pressed && styles.pressed]}>
+      <View style={styles.flex}><Text style={[styles.dropdownValue, !selected && styles.dropdownPlaceholder]}>{selected?.label ?? placeholder}</Text>{selected?.detail ? <Text style={styles.dropdownDetail}>{selected.detail}</Text> : null}</View>
+      <Text style={styles.dropdownChevron}>⌄</Text>
+    </Pressable>
+    <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
+      <Pressable style={styles.sheetOverlay} onPress={() => setOpen(false)}>
+        <View style={styles.optionSheet}>
+          <View style={styles.sheetHandle} />
+          <Text accessibilityRole="header" style={styles.sheetTitle}>{label}</Text>
+          {options.map(option => <Pressable key={option.value} accessibilityRole="radio" accessibilityState={{ selected: option.value === value }} onPress={() => { onSelect(option.value); setOpen(false); }} style={({ pressed }) => [styles.dropdownOption, option.value === value && styles.dropdownOptionSelected, pressed && styles.pressed]}><View style={styles.flex}><Text style={styles.dropdownOptionTitle}>{option.label}</Text>{option.detail ? <Text style={styles.dropdownDetail}>{option.detail}</Text> : null}</View>{option.value === value ? <MarginIcon name="check" size={20} color={colors.forest} /> : null}</Pressable>)}
+          <AppButton text="Close" variant="quiet" onPress={() => setOpen(false)} />
+        </View>
+      </Pressable>
+    </Modal>
+  </View>;
 }
 
 export function CompactStepper({ label, value, onDecrease, onIncrease }: { label: string; value: string; onDecrease: () => void; onIncrease: () => void }) {
@@ -249,54 +245,49 @@ export function CompactStepper({ label, value, onDecrease, onIncrease }: { label
   );
 }
 
-export function CapacityBar({ value, compact = false }: { value: CapacityValue; compact?: boolean }) {
-  const meta = capacityMeta[value.kind];
-  const percentage = Math.min(150, Math.round((value.used / Math.max(value.limit, 1)) * 100));
-  return (
-    <View style={styles.capacityBlock} accessibilityLabel={`${meta.label} at ${percentage} percent`}>
-      <View style={styles.capacityTopRow}>
-        <Text style={[styles.capacityName, compact && styles.capacityNameCompact]}>{meta.label}</Text>
-        <Text style={[styles.capacityPercent, compact && styles.capacityPercentCompact]}>{percentage}%</Text>
-      </View>
-      <View style={[styles.capacityTrack, compact && styles.capacityTrackCompact]}>
-        <View style={[styles.capacityFill, { width: `${Math.min(100, percentage)}%`, backgroundColor: meta.color }]} />
-      </View>
-    </View>
-  );
-}
-
 const tabs: { key: MainTab; label: string; icon: IconName }[] = [
   { key: "today", label: "Dashboard", icon: "today" },
   { key: "plan", label: "Plan", icon: "plan" },
-  { key: "distribution", label: "Load", icon: "distribution" },
   { key: "recovery", label: "Recover", icon: "recovery" },
+  { key: "profile", label: "Profile", icon: "person" },
 ];
 
-export function BottomNav({ selected, onSelect }: { selected: MainTab; onSelect: (tab: MainTab) => void }) {
+const quickActions: { key: QuickAddAction; label: string; detail: string; icon: IconName }[] = [
+  { key: "commitment", label: "Add commitment", detail: "Event, shift, club, sport or personal plan", icon: "plus" },
+  { key: "assignment", label: "Add assignment", detail: "Choose a module, start date and due date", icon: "plan" },
+  { key: "timetable", label: "Import schedule", detail: "Upload or replace your timetable", icon: "calendar" },
+  { key: "materials", label: "Add learning material", detail: "Upload notes for a module", icon: "document" },
+  { key: "weekly-note", label: "Update weekly note", detail: "Keep one piece of context visible", icon: "leaf" },
+];
+
+export function BottomNav({ selected, onSelect, onQuickAdd }: { selected: MainTab; onSelect: (tab: MainTab) => void; onQuickAdd?: (action: QuickAddAction) => void }) {
+  const [open, setOpen] = useState(false);
+  const renderTab = (tab: (typeof tabs)[number]) => {
+    const active = selected === tab.key;
+    return <Pressable key={tab.key} accessibilityRole="tab" accessibilityState={{ selected: active }} aria-selected={active} onPress={() => onSelect(tab.key)} style={({ pressed }) => [styles.navItem, pressed && styles.pressed]}><View style={[styles.navIconBox, active && styles.navIconBoxActive]}><MarginIcon name={tab.icon} color={active ? colors.forest : colors.white} size={20} /></View><Text style={[styles.navLabel, active && styles.navLabelActive]}>{tab.label}</Text></Pressable>;
+  };
   return (
-    <View style={styles.navOuter}>
-      <ForestFloor />
-      <View style={styles.navBar} accessibilityRole="tablist">
-        {tabs.map((tab) => {
-          const active = selected === tab.key;
-          return (
-            <Pressable
-              key={tab.key}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: active }}
-              aria-selected={active}
-              onPress={() => onSelect(tab.key)}
-              style={({ pressed }) => [styles.navItem, pressed && styles.pressed]}
-            >
-              <View style={[styles.navIconBox, active && styles.navIconBoxActive]}>
-                <MarginIcon name={tab.icon} color={active ? colors.forest : colors.mint} size={20} />
-              </View>
-              <Text style={[styles.navLabel, active && styles.navLabelActive]}>{tab.label}</Text>
-            </Pressable>
-          );
-        })}
+    <>
+      <View style={styles.navOuter}>
+        <ForestFloor />
+        <View style={styles.navBar} accessibilityRole="tablist">
+          {tabs.slice(0, 2).map(renderTab)}
+          <Pressable accessibilityRole="button" accessibilityLabel="Open add menu" accessibilityState={{ expanded: open }} onPress={() => setOpen(true)} style={({ pressed }) => [styles.addNavItem, pressed && styles.pressed]}><View style={styles.addNavButton}><MarginIcon name="plus" color={colors.soilDark} size={27} strokeWidth={2.3} /></View><Text style={styles.navLabelActive}>Add</Text></Pressable>
+          {tabs.slice(2).map(renderTab)}
+        </View>
       </View>
-    </View>
+      <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
+        <Pressable style={styles.sheetOverlay} onPress={() => setOpen(false)}>
+          <View style={styles.quickAddSheet}>
+            <View style={styles.sheetHandle} />
+            <Text accessibilityRole="header" style={styles.sheetTitle}>Add to Santai</Text>
+            <Text style={styles.sheetBody}>Choose what you want to add. Nothing is saved until you review it.</Text>
+            {quickActions.map(action => <Pressable key={action.key} accessibilityRole="button" onPress={() => { setOpen(false); onQuickAdd?.(action.key); }} style={({ pressed }) => [styles.quickAction, pressed && styles.pressed]}><View style={styles.quickActionIcon}><MarginIcon name={action.icon} color={colors.forest} size={22} /></View><View style={styles.flex}><Text style={styles.quickActionTitle}>{action.label}</Text><Text style={styles.quickActionDetail}>{action.detail}</Text></View><MarginIcon name="chevron" color={colors.forest} size={19} /></Pressable>)}
+            <AppButton text="Close" variant="quiet" onPress={() => setOpen(false)} />
+          </View>
+        </Pressable>
+      </Modal>
+    </>
   );
 }
 
@@ -365,15 +356,19 @@ const styles = StyleSheet.create({
   inputMultiline: { minHeight: 108, textAlignVertical: "top" },
   wrapRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   segmentChoice: { minWidth: 104, flexGrow: 1 },
-  impactRow: { gap: 10 },
-  impactLabelRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  dot: { width: 10, height: 10, borderRadius: 5 },
-  impactLabel: { ...type.label, color: colors.ink, flex: 1 },
-  impactValue: { ...type.caption, color: colors.textMuted },
-  impactChoices: { flexDirection: "row", gap: 8 },
-  impactButton: { flex: 1, minHeight: 48, borderRadius: 9, borderWidth: 1, borderColor: colors.outlineSoft, backgroundColor: colors.paper, alignItems: "center", justifyContent: "center" },
-  impactButtonText: { ...type.label, color: colors.ink },
-  impactButtonTextSelected: { color: colors.white },
+  dropdownButton: { minHeight: 58, borderRadius: 12, borderWidth: 1, borderColor: colors.outline, backgroundColor: colors.paper, paddingHorizontal: 15, paddingVertical: 9, flexDirection: "row", alignItems: "center", gap: 12 },
+  dropdownValue: { ...type.label, color: colors.ink },
+  dropdownPlaceholder: { color: colors.textMuted },
+  dropdownDetail: { ...type.caption, color: colors.textMuted, marginTop: 2 },
+  dropdownChevron: { fontFamily: fonts.bold, fontSize: 24, lineHeight: 24, color: colors.forest },
+  sheetOverlay: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(4, 22, 16, 0.55)" },
+  optionSheet: { width: "100%", maxWidth: layout.pageMaxWidth, alignSelf: "center", backgroundColor: colors.canvas, borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingHorizontal: 20, paddingTop: 10, paddingBottom: 24, gap: 10 },
+  sheetHandle: { width: 44, height: 5, borderRadius: 3, backgroundColor: colors.outlineSoft, alignSelf: "center", marginBottom: 4 },
+  sheetTitle: { ...type.h2, color: colors.ink },
+  sheetBody: { ...type.bodySmall, color: colors.textMuted, marginBottom: 5 },
+  dropdownOption: { minHeight: 58, borderRadius: 12, borderWidth: 1, borderColor: colors.outlineSoft, backgroundColor: colors.paper, paddingHorizontal: 14, paddingVertical: 10, flexDirection: "row", alignItems: "center", gap: 12 },
+  dropdownOptionSelected: { borderColor: colors.forest, backgroundColor: colors.mint },
+  dropdownOptionTitle: { ...type.label, color: colors.ink },
   stepperRow: { minHeight: 58, flexDirection: "row", alignItems: "center", gap: 12, borderTopWidth: 1, borderColor: colors.outlineSoft, paddingTop: 10 },
   stepperText: { flex: 1 },
   stepperLabel: { ...type.caption, color: colors.textMuted },
@@ -381,22 +376,20 @@ const styles = StyleSheet.create({
   stepperControls: { flexDirection: "row", gap: 8 },
   stepperButton: { width: 48, height: 48, borderRadius: 10, borderWidth: 1, borderColor: colors.outlineSoft, backgroundColor: colors.softMint, alignItems: "center", justifyContent: "center" },
   stepperSymbol: { fontFamily: fonts.medium, fontSize: 24, lineHeight: 26, color: colors.forest },
-  capacityBlock: { gap: 7 },
-  capacityTopRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "baseline" },
-  capacityName: { ...type.label, color: colors.ink },
-  capacityNameCompact: { fontSize: 13 },
-  capacityPercent: { ...type.bodySmall, color: colors.textMuted },
-  capacityPercentCompact: { fontSize: 13 },
-  capacityTrack: { height: 9, borderRadius: 5, backgroundColor: colors.outlineSoft, overflow: "hidden" },
-  capacityTrackCompact: { height: 7 },
-  capacityFill: { height: "100%", borderRadius: 5 },
-  navOuter: { backgroundColor: colors.deepForest, paddingHorizontal: 14, paddingTop: 16, paddingBottom: Platform.OS === "web" ? 12 : 4 },
-  navBar: { minHeight: 74, borderRadius: 17, borderWidth: 0, borderColor: colors.outlineSoft, backgroundColor: "transparent", flexDirection: "row", paddingHorizontal: 5, paddingVertical: 5 },
+  navOuter: { backgroundColor: colors.soil, paddingHorizontal: 10, paddingTop: 16, paddingBottom: Platform.OS === "web" ? 12 : 4 },
+  navBar: { minHeight: 78, borderRadius: 17, borderWidth: 0, borderColor: colors.outlineSoft, backgroundColor: "transparent", flexDirection: "row", paddingHorizontal: 2, paddingVertical: 5 },
   navItem: { flex: 1, minHeight: 62, alignItems: "center", justifyContent: "space-between", paddingVertical: 4 },
   navIconBox: { width: 52, height: 34, borderRadius: 18, borderWidth: 0, borderColor: colors.outlineSoft, backgroundColor: "transparent", alignItems: "center", justifyContent: "center" },
   navIconBoxActive: { backgroundColor: colors.mint, borderColor: "rgba(15,107,79,0.25)" },
-  navLabel: { fontFamily: fonts.regular, fontSize: 13, lineHeight: 18, color: colors.mint },
+  navLabel: { fontFamily: fonts.regular, fontSize: 12, lineHeight: 18, color: colors.white },
   navLabelActive: { fontFamily: fonts.semiBold, color: colors.white },
+  addNavItem: { flex: 1, minHeight: 66, alignItems: "center", justifyContent: "space-between", marginTop: -19, paddingBottom: 4 },
+  addNavButton: { width: 58, height: 58, borderRadius: 29, backgroundColor: colors.leaf, borderWidth: 4, borderColor: colors.paper, alignItems: "center", justifyContent: "center" },
+  quickAddSheet: { width: "100%", maxWidth: layout.pageMaxWidth, alignSelf: "center", backgroundColor: colors.canvas, borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingHorizontal: 20, paddingTop: 10, paddingBottom: 24, gap: 10 },
+  quickAction: { minHeight: 68, borderRadius: 15, backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.outlineSoft, padding: 12, flexDirection: "row", alignItems: "center", gap: 12 },
+  quickActionIcon: { width: 44, height: 44, borderRadius: 12, backgroundColor: colors.mint, alignItems: "center", justifyContent: "center" },
+  quickActionTitle: { ...type.label, color: colors.ink },
+  quickActionDetail: { ...type.caption, color: colors.textMuted, marginTop: 2 },
   progressTrack: { height: 7, backgroundColor: colors.outlineSoft, borderRadius: 4, overflow: "hidden" },
   progressFill: { height: "100%", borderRadius: 4 },
   notice: { borderRadius: 12, padding: 16, gap: 4 },

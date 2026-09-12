@@ -5,6 +5,10 @@ Forest palette, environmental vector contours and forest-floor styling in
 `rimbun-forest-final.zip`. Only presentation is reused. Santai's S/river logo is
 newly authored for this project.
 
+`assets/images/maskott-reference.png` is the exact user-supplied Santai mascot
+reference sheet. The app crops poses from that source at runtime so the established
+character identity is preserved without redrawing or recolouring it.
+
 DM Sans and Space Grotesk license notices are included beside their fonts in
 `assets/fonts/`.
 

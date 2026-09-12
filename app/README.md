@@ -42,17 +42,19 @@ npm run export:web
 ## Key implementation rules
 
 - `src/app/` contains only Expo Router entry points.
-- `src/features/margin/SantaiApp.tsx` owns the locally persisted prototype flow and state.
+- `src/features/margin/MarginApp.tsx` owns the locally persisted prototype flow and state.
 - shared controls and the vector system live in `src/components/`.
 - no operating-system emoticon glyphs are used for Check-in states.
 - visible UI text is 13px or larger and primary touch targets are at least 48dp.
 - hypothetical commitments are not saved until the user explicitly confirms them.
-- the four persistent sections are Dashboard, Plan, Load, and Recover; daily Check-in is a focused popup rather than a duplicate navigation destination.
+- the four persistent sections are Dashboard, Plan, Recover, and Profile; the centre Add button opens a compact sheet for every create/import action.
+- the mascot itself provides the daily Check-in prompt and cycles through encouraging notes when tapped.
+- Schedule and Assignments have dedicated pages, while Recovery replaces the old Load destination and ranks only options that do not worsen the user's most constrained capacity.
 - timetable selection uses Expo DocumentPicker so the same import entry point works on Android, iOS, and web.
 
 ## Current prototype
 
-See [PROTOTYPE.md](PROTOTYPE.md) for the full feature checklist, theme source, estimation rules and deferred integrations. App version 1.1.4 adds an animated energy-responsive leaf, a movable forest streak pet, and a simplified Welcome with baseline replay on each fresh launch while preserving saved data. It retains package `com.codenection.margin` for in-place updates.
+See [PROTOTYPE.md](PROTOTYPE.md) for the full feature checklist, theme source, estimation rules and deferred integrations. App version 1.2.0 adds the exact supplied Santai mascot, compact capacity signals, guarded recovery recommendations, dedicated Schedule, Assignments and Profile pages, a single effort estimate, module-aware material uploads and the central quick-add sheet. It retains package `com.codenection.margin` for in-place updates.
 
 Run `node scripts/test-planner.cjs` for planner model regression checks.
-The 1.1.4 interface replaces the reservoir with an energy-responsive single leaf, centres the Welcome composition above Build my week, and adds a draggable streak pet with active/inactive expressions. Plan options also cover unscheduled commitments. See PROTOTYPE.md for the current behaviour.
+The 1.2.0 interface keeps the energy-responsive leaf, adds animated welcome leaves, uses a compact forest-floor navigation bar and makes Plan cards easier to scan with semantic colour accents. See PROTOTYPE.md for the current behaviour.

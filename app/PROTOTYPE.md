@@ -1,6 +1,6 @@
 # Santai — prototype handoff
 
-Updated 12 September 2026 (1.1.4). Expo SDK 57, React Native and TypeScript. Android, iOS and web share the same frontend in `app/`.
+Updated 13 September 2026 (1.2.0). Expo SDK 57, React Native and TypeScript. Android, iOS and web share the same frontend in `app/`.
 
 ## Implemented flow
 
@@ -12,13 +12,13 @@ Updated 12 September 2026 (1.1.4). Expo SDK 57, React Native and TypeScript. And
 - Question selection adapts to the chosen routines, followed by recovery-time preference.
 - Import a timetable or add commitments manually, then save an optional weekly note.
 - A short preparation screen assembles the local plan. No daily check-in is shown on the registration date.
-- Prototype replay: every cold app launch or browser reload opens Welcome, including for returning users. Build my week revisits baseline with saved answers; the Continue saved plan button has been removed. Welcome uses a plain Rimbun-green background with a centred leaf, Santai name and message, retaining the Build my week button below. Backgrounding alone does not reset an unfinished form. Saved commitments, modules, diary and streak are retained.
+- Prototype replay: every cold app launch or browser reload opens Welcome, including for returning users. Build my week revisits baseline with saved answers; the Continue saved plan button has been removed. Welcome uses a Rimbun-green background, the dashboard leaf and small animated leaves around a concise “Make room for what matters” message. Backgrounding alone does not reset an unfinished form. Saved commitments, modules, diary and streak are retained.
 
 ### Timetable and assignments
 
-- ICS import reads module names and recurring weekdays; repeated module names are merged. Module setup only asks for names and assignments, not class days. Manual modules retain the baseline class estimate until a timetable supplies actual weekdays.
+- ICS import reads module names and recurring weekdays; repeated module names are merged. Every detected or manually entered module can receive learning materials before the timetable is saved. Manual modules retain the baseline class estimate until a timetable supplies actual weekdays.
 - Each module can have an assignment, with a start date and optional due date labelled “Set up later”.
-- Save proceeds to Add Commitment. Additional modules can be entered manually.
+- Save proceeds to Add Commitment, which includes a clear return action to the timetable. Schedule is also a dedicated page where users can view their week and import a replacement timetable.
 - Selection cancellation, loading, invalid-file errors and manual fallback are handled.
 
 ### Add Commitment
@@ -28,7 +28,7 @@ Updated 12 September 2026 (1.1.4). Expo SDK 57, React Native and TypeScript. And
 - Flexible: no date questions; stays unscheduled until edited to Fixed in Plan or Schedule.
 - Daily routine: repeats every day from creation, with no additional scheduling questions.
 - Only assignments and optional competition submissions have deadlines. A deadline cannot precede the last planned session; other categories use attendance dates, not artificial due dates.
-- Duration and effort sliders with an understandable social-load explanation.
+- One duration slider and one total-effort slider. Santai transparently estimates the capacity split from category and total effort instead of asking the user to rate every load dimension.
 - All commitments, including Set up later items, expose Keep as planned / Move to another day / Ask someone to help / Skip this time / Make it lighter. Undated items stay excluded from dated load until a date is explicitly chosen.
 - Unscheduled items are visible in Plan and Schedule, but do not inflate dated load estimates. Repeating sessions count once on each matching day. Rebalancing one occurrence does not change other days; Edit details changes the whole series and clears its old occurrence overrides.
 - “Add & continue” and “Add & add another commitment” have distinct outcomes; editing has one Save action.
@@ -36,11 +36,12 @@ Updated 12 September 2026 (1.1.4). Expo SDK 57, React Native and TypeScript. And
 ### Dashboard and menu
 
 - Daily / Weekly switching is in the hamburger menu, together with Schedule and Assignments.
-- Live capacity estimates for time, mental, physical and social; energy out of 100; check-in streak avatar.
-- A broad, curved single leaf with a curled tip matches the approved dashboard reference. Its gentle breeze animation respects reduced-motion settings. Compact icon / label / bar / percentage rows display the four capacities. The single-stem energy visual sits directly on the forest background above the cream dashboard sheet. Low energy makes the leaf smaller, dry amber and drooping; higher energy makes it larger, upright and green. The numeric estimate and plain-language label remain visible; colour is not the only indicator. Rimbun greens and the forest-floor navigation are retained.
-- An original leaf-shaped streak pet floats at the bottom-right above navigation on the four main pages. Drag to reposition within the screen above navigation; tap for a short streak message. With no active streak, the pet has angled eyebrows and a frown; an active streak restores its smile. Screen readers can move it left/right using accessibility actions. Gentle bobbing respects system reduced-motion settings; scroll padding keeps final actions reachable.
-- A compact missing-check-in banner appears from the day after registration; a saved check-in can be updated.
-- The flashcard banner displays today's module names from the timetable, with an upload entry point when the library is empty.
+- Live capacity estimates for time, mental, physical and social appear as compact 2×2 signal cards with percentages and plain-language states, so colour is never the only indicator.
+- A broad, curved single leaf with a curled tip matches the approved dashboard reference. Its gentle breeze animation respects reduced-motion settings. The single-stem energy visual sits directly on the forest background above the cream dashboard sheet. Low energy makes the leaf smaller, dry amber and drooping; higher energy makes it larger, upright and green.
+- The exact supplied cabbage-bunny mascot sheet is retained as the identity reference and cropped at runtime for the floating app pet. Tap the mascot for rotating motivational notes. When Check-in is due, a separate clickable note appears above it rather than consuming a dashboard card.
+- The former daily reminder space now holds the user's weekly note.
+- The flashcard entry is visually highlighted. Its add-material box uses a module dropdown and file upload; the redundant manual flashcard creation form is removed.
+- The bottom navigation uses green grass over brown soil. Dashboard, Plan, Recover and Profile remain persistent; the central Add button reveals timetable, assignment, commitment, material and weekly-note actions in a bottom sheet.
 - Direct actions to review/rebalance the real plan and preview a possible commitment.
 
 ### Daily check-in
@@ -50,21 +51,22 @@ Updated 12 September 2026 (1.1.4). Expo SDK 57, React Native and TypeScript. And
 - Optional daily diary, without automatically creating commitments. The previous pressure-source section is removed.
 - Save or Save & open Plan. Check-ins and consecutive-day streaks persist locally.
 
-### Plan and load
+### Plan and profile
 
 - Daily mode shows the selected day; Weekly shows all seven days. Date navigation and the Add label adapt to the mode.
 - Separate Routine and Commitments & deadlines sections. Schedule and Assignment filters are accessible from the menu.
 - Every item has Keep as planned, Move to another day, Ask someone to help, Skip this time and Make it lighter.
 - Moving checks the due date; making it lighter reduces estimated duration/load; skipping removes counted load and can be undone. Asking for help records a reminder, not an actual message or confirmed handoff.
-- The four-category pie/donut chart uses counted commitments, not repeated deadline reminders.
+- Plan cards use category-aware colour accents and a compact daily load summary to strengthen scanning without relying on colour alone.
 - The what-if form calculates before/after capacity using the chosen day and entered effort. Nothing is added until explicit confirmation.
+- Profile replaces the old Load page and gathers mascot, streak, plan, baseline, capacity answers, weekly note and privacy status in one calm personal view.
 
 ### Recovery and flashcards
 
-- Recovery days are sorted highest load first; suggestion type/intensity responds to estimated load. Only today's recovery can be completed; future days remain previews.
+- Recovery days are sorted highest load first and safe options are ranked by the capacity that is most constrained. Mental overload can receive outside time, mastery hobbies, absorbing games, awe walks, micro-breaks, a written next-task plan, supportive conversation, sleep, a short alarmed nap or low-effort rest.
+- Recovery guardrails prevent exercise suggestions when physical capacity is high and prevent social suggestions when social capacity is high. Time overload is explicitly treated as Drop / Delay / Delegate; only the five-minute written next-task plan remains as decompression. Low-load days preserve the free pocket instead of inventing a task.
 - Completion/undo and Better / About the same / Still drained reflections persist.
-- Bulk material upload per module for a week or semester. Library grouping by module, day, topic or week; flip cards and remove materials.
-- TXT/MD/tab-separated text containing “term: explanation” produces cards locally. Manual question/answer creation is available.
+- Bulk material upload starts with a module dropdown. The library keeps grouped, flippable cards and material removal, while TXT/MD/tab-separated text containing “term: explanation” still produces cards locally.
 
 ## Theme and identity
 
@@ -80,13 +82,13 @@ Updated 12 September 2026 (1.1.4). Expo SDK 57, React Native and TypeScript. And
 - Without imported module weekdays, recurring activities are provisionally placed from Monday for the chosen number of days. ICS uses module weekdays but not exact session times or semester end dates.
 - Assignment percentage describes intended work, not verified completion. Daily study time is divided between selected assignments.
 - Image timetable OCR is not connected; images lead to honest manual review/entry. ICS import works locally.
-- PDF/PowerPoint materials can be uploaded, but automatic card generation from them is not connected; use manual cards. Browser uploads retain metadata and extracted cards, not a durable original-file backup.
+- PDF/PowerPoint materials can be uploaded, but automatic card generation from them is not connected. Browser uploads retain metadata and extracted text cards, not a durable original-file backup.
 - Weekly-note AI extraction, duplicate detection and contradiction checking remain KIV as requested. Diary text is not sent to an AI service.
-- Recovery, energy and the avatar do not add Mini You, Circle or Album features.
+- Recovery, energy and the mascot do not add Mini You, Circle or Album features.
 
 ## Verification
 
 - `npm run check`: TypeScript and lint.
-- `node scripts/test-planner.cjs`: date boundaries, ICS merging, routine placement, same-day sport override, load weighting and flashcard extraction.
+- `node scripts/test-planner.cjs`: date boundaries, ICS merging, routine placement, same-day sport override, load weighting, recovery guardrails and flashcard extraction.
 - Mobile-width browser flow: baseline defaults, import, assignment setup, add-another, first-day suppression, menu filtering, skip/restore, hypothetical-before-confirmation, bulk cards, persistence, next-day check-in, streak and recovery reflection.
 - Android standalone build/install is checked separately. iOS has shared-source support but has not been built or tested on this Windows machine.

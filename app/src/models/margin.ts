@@ -69,15 +69,20 @@ export type AppScreen =
   | "anything-else"
   | "today"
   | "plan"
-  | "distribution"
   | "add"
   | "rebalance"
   | "test-commitment"
   | "simulator"
   | "recovery"
+  | "profile"
+  | "schedule"
+  | "assignments"
+  | "weekly-note"
   | "rebalanced";
 
-export type MainTab = "today" | "plan" | "distribution" | "recovery";
+export type MainTab = "today" | "plan" | "recovery" | "profile";
+
+export type QuickAddAction = "timetable" | "assignment" | "commitment" | "materials" | "weekly-note";
 
 export const capacityMeta: Record<CapacityKind, { label: string; color: string }> = {
   time: { label: "Time", color: "#0F6B4F" },

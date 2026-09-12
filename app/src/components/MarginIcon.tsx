@@ -4,7 +4,6 @@ export type IconName =
   | "leaf"
   | "today"
   | "plan"
-  | "distribution"
   | "check-in"
   | "recovery"
   | "calendar"
@@ -30,7 +29,6 @@ export function MarginIcon({ name, color = "#0F6B4F", size = 24, strokeWidth = 1
       {name === "leaf" && <><Path d="M4 19C5.5 9 11 4.5 20 4c-.4 8.5-5.2 14-13 15" {...common} /><Path d="M6.5 17.5 17 7.5" {...common} /></>}
       {name === "today" && <><Path d="M5 8h14v11H5z" {...common} /><Path d="M8 5v5M16 5v5M5 11h14" {...common} /><Rect x="9" y="14" width="6" height="3" rx="1" fill={color} /></>}
       {name === "plan" && <><Rect x="4" y="5" width="16" height="15" rx="2" {...common} /><Path d="M8 3v4M16 3v4M4 10h16M8 14h3M8 17h6" {...common} /></>}
-      {name === "distribution" && <><Path d="M11 3a9 9 0 1 0 9 9h-9z" {...common} /><Path d="M14 3.6A9 9 0 0 1 20.4 10H14z" {...common} /></>}
       {name === "check-in" && <><Circle cx="12" cy="12" r="8" {...common} /><Circle cx="9" cy="10" r="1" fill={color} /><Circle cx="15" cy="10" r="1" fill={color} /><Path d="M8.5 14.5c2.2 2 4.8 2 7 0" {...common} /></>}
       {name === "recovery" && <><Path d="M5 17c1-7 5-11 14-12-1 8-5 12-12 13" {...common} /><Path d="m6 19 10-11" {...common} /></>}
       {name === "calendar" && <><Rect x="4" y="5" width="16" height="15" rx="2" {...common} /><Path d="M8 3v4M16 3v4M4 10h16" {...common} /></>}

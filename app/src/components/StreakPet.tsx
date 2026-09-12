@@ -1,13 +1,29 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { AccessibilityInfo, Animated, Easing, PanResponder, Pressable, Text, View } from "react-native";
-import Svg, { Circle, Ellipse, Path } from "react-native-svg";
+import { AccessibilityInfo, Animated, Easing, PanResponder, Platform, Pressable, Text, View } from "react-native";
 import { colors, fonts } from "@/theme/tokens";
+import { MascotAvatar } from "./MascotAvatar";
 
-export const StreakPetContext = createContext<number | undefined>(undefined);
+type StreakPetState = {
+  streak: number;
+  checkIn?: { label: string; onPress: () => void };
+  hidden?: boolean;
+};
+
+export const StreakPetContext = createContext<StreakPetState | undefined>(undefined);
+
+const encouragements = [
+  "Small steps still count.",
+  "Leave a little room for future you.",
+  "Rest protects the work that matters.",
+  "One clear next step is enough for now.",
+  "You can let one thing wait.",
+  "A gentler plan is still a real plan.",
+];
 
 /** Original forest companion; anchored above the navigation, outside the scroll area. */
 export function StreakPet({ bottom, frame }: { bottom: number; frame: { width: number; height: number } }) {
-  const streak = useContext(StreakPetContext);
+  const petState = useContext(StreakPetContext);
+  const streak = petState?.streak;
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const offset = useRef({ x: 0, y: 0 });
   const start = useRef({ x: 0, y: 0 });
@@ -30,7 +46,7 @@ export function StreakPet({ bottom, frame }: { bottom: number; frame: { width: n
     onPanResponderTerminationRequest: () => false,
   }), [frame.width, frame.height, bottom]);
   /* eslint-enable react-hooks/refs */
-  const [message, setMessage] = useState(false);
+  const [messageIndex, setMessageIndex] = useState<number | null>(null);
   const [lift] = useState(() => new Animated.Value(0));
   useEffect(() => {
     let active = true;
@@ -39,8 +55,8 @@ export function StreakPet({ bottom, frame }: { bottom: number; frame: { width: n
       loop?.stop(); lift.setValue(0);
       if (!reduced && active && streak !== undefined) {
         loop = Animated.loop(Animated.sequence([
-          Animated.timing(lift, { toValue: -6, duration: 1400, easing: Easing.inOut(Easing.sin), useNativeDriver: true, isInteraction: false }),
-          Animated.timing(lift, { toValue: 0, duration: 1400, easing: Easing.inOut(Easing.sin), useNativeDriver: true, isInteraction: false }),
+          Animated.timing(lift, { toValue: -6, duration: 1400, easing: Easing.inOut(Easing.sin), useNativeDriver: Platform.OS !== "web", isInteraction: false }),
+          Animated.timing(lift, { toValue: 0, duration: 1400, easing: Easing.inOut(Easing.sin), useNativeDriver: Platform.OS !== "web", isInteraction: false }),
         ])); loop.start();
       }
     };
@@ -48,22 +64,16 @@ export function StreakPet({ bottom, frame }: { bottom: number; frame: { width: n
     const sub = AccessibilityInfo.addEventListener("reduceMotionChanged", update);
     return () => { active = false; loop?.stop(); sub.remove(); };
   }, [lift, streak]);
-  if (streak === undefined) return null;
+  if (streak === undefined || petState?.hidden) return null;
+  const showEncouragement = () => setMessageIndex(current => {
+    if (current === null) return Math.floor(Math.random() * encouragements.length);
+    if (encouragements.length === 1) return 0;
+    return (current + 1 + Math.floor(Math.random() * (encouragements.length - 1))) % encouragements.length;
+  });
   return <View {...pan.panHandlers} pointerEvents="box-none" style={{ position: "absolute", bottom: bottom - clampPosition(position.x, position.y).y, right: 16 - clampPosition(position.x, position.y).x, width: 84, alignItems: "flex-end", paddingBottom: 8 }}>
-    {message && <View style={{ position: "absolute", bottom: 118, width: Math.min(240, frame.width - 32), right: Math.max(-(frame.width - 272), Math.min(0, position.x)), backgroundColor: colors.paper, borderColor: colors.forest, borderWidth: 1, padding: 12, borderRadius: 16, marginBottom: 10 }}><Text style={{ fontFamily: fonts.regular, fontSize: 15, lineHeight: 21, color: colors.ink }}>{streak ? `${streak} day${streak === 1 ? "" : "s"} of checking in. One small pause at a time.` : "I’m here to keep you company. Your first check-in starts your streak—no rush."}</Text></View>}
-    <Pressable accessibilityRole="button" accessibilityHint="Drag to move. Tap to hear from your pet." accessibilityActions={[{ name: "increment", label: "Move pet left" }, { name: "decrement", label: "Move pet right" }]} onAccessibilityAction={event => { const next = clampPosition(position.x + (event.nativeEvent.actionName === "increment" ? -60 : 60), position.y); offset.current = next; setPosition(next); }} accessibilityLabel={`Your streak pet, ${streak} day${streak === 1 ? "" : "s"}`} accessibilityState={{ expanded: message }} onPress={() => setMessage(!message)} style={{ minWidth: 84, alignItems: "center" }}>
-      <Animated.View style={{ transform: [{ translateY: lift }] }}><Svg width={80} height={78} viewBox="0 0 100 100" accessibilityElementsHidden>
-        <Ellipse cx={50} cy={94} rx={26} ry={4} fill="#061F18" opacity={0.2} />
-        <Path d="M46 25C29 22 23 11 29 3C43 3 53 12 50 25C55 8 70 4 79 12C76 25 63 31 50 27Z" fill="#B8D58C" stroke="#153E30" strokeWidth={2.5} />
-        <Path d="M25 47Q13 55 11 71Q20 77 28 69M74 47Q89 51 90 66Q83 74 75 68" fill="#A8D7B9" stroke="#153E30" strokeWidth={2.5} />
-        <Path d="M23 51C24 20 76 20 78 51L81 72Q79 85 67 84L60 81Q51 91 42 82Q24 91 20 76Z" fill="#D1E9B5" stroke="#153E30" strokeWidth={3} />
-        <Ellipse cx={50} cy={66} rx={22} ry={15} fill="#F2F3D8" />
-        <Circle cx={37} cy={51} r={4} fill="#163E31" /><Circle cx={63} cy={51} r={4} fill="#163E31" />
-        <Circle cx={38} cy={50} r={1.1} fill="#FFF" /><Circle cx={64} cy={50} r={1.1} fill="#FFF" />
-        <Ellipse cx={29} cy={60} rx={5} ry={3} fill="#D59C79" opacity={0.7} /><Ellipse cx={71} cy={60} rx={5} ry={3} fill="#D59C79" opacity={0.7} />
-        {streak === 0 && <Path d="M31 41L42 46M58 46L69 41" fill="none" stroke="#163E31" strokeWidth={3} strokeLinecap="round" />}
-        <Path d={streak === 0 ? "M44 65Q50 58 56 65" : "M44 60Q50 67 56 60"} fill="none" stroke="#163E31" strokeWidth={2.5} strokeLinecap="round" />
-      </Svg></Animated.View>
+    {messageIndex !== null ? <View style={{ position: "absolute", bottom: 114, width: Math.min(240, frame.width - 32), right: Math.max(-(frame.width - 272), Math.min(0, position.x)), backgroundColor: colors.paper, borderColor: colors.forest, borderWidth: 1, padding: 12, borderRadius: 16, marginBottom: 10 }}><Text style={{ fontFamily: fonts.regular, fontSize: 15, lineHeight: 21, color: colors.ink }}>{encouragements[messageIndex]}</Text></View> : petState?.checkIn ? <Pressable accessibilityRole="button" accessibilityLabel={petState.checkIn.label} onPress={petState.checkIn.onPress} style={({ pressed }) => ({ position: "absolute", bottom: 114, width: Math.min(220, frame.width - 32), right: Math.max(-(frame.width - 252), Math.min(0, position.x)), backgroundColor: colors.paper, borderColor: colors.forest, borderWidth: 1, padding: 12, borderRadius: 16, marginBottom: 10, opacity: pressed ? 0.75 : 1 })}><Text style={{ fontFamily: fonts.bold, fontSize: 14, lineHeight: 20, color: colors.forest }}>{petState.checkIn.label}</Text><Text style={{ fontFamily: fonts.regular, fontSize: 13, lineHeight: 18, color: colors.textMuted, marginTop: 2 }}>Tap this note to open it.</Text></Pressable> : null}
+    <Pressable accessibilityRole="button" accessibilityHint="Drag to move. Tap for an encouraging note." accessibilityActions={[{ name: "increment", label: "Move pet left" }, { name: "decrement", label: "Move pet right" }]} onAccessibilityAction={event => { const next = clampPosition(position.x + (event.nativeEvent.actionName === "increment" ? -60 : 60), position.y); offset.current = next; setPosition(next); }} accessibilityLabel={`Your streak pet, ${streak} day${streak === 1 ? "" : "s"}`} accessibilityState={{ expanded: messageIndex !== null }} onPress={showEncouragement} style={{ minWidth: 84, alignItems: "center" }}>
+      <Animated.View style={{ borderRadius: 25, borderWidth: 2, borderColor: colors.paper, transform: [{ translateY: lift }] }}><MascotAvatar size={80} /></Animated.View>
       <Text style={{ fontFamily: fonts.bold, fontSize: 14, color: colors.white, backgroundColor: colors.forest, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4 }}>{streak} day{streak === 1 ? "" : "s"}</Text>
     </Pressable>
   </View>;
