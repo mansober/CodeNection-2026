@@ -1,6 +1,6 @@
 # Santai — prototype handoff
 
-Updated 12 September 2026 (1.1.3). Expo SDK 57, React Native and TypeScript. Android, iOS and web share the same frontend in `app/`.
+Updated 12 September 2026 (1.1.4). Expo SDK 57, React Native and TypeScript. Android, iOS and web share the same frontend in `app/`.
 
 ## Implemented flow
 
@@ -12,7 +12,7 @@ Updated 12 September 2026 (1.1.3). Expo SDK 57, React Native and TypeScript. And
 - Question selection adapts to the chosen routines, followed by recovery-time preference.
 - Import a timetable or add commitments manually, then save an optional weekly note.
 - A short preparation screen assembles the local plan. No daily check-in is shown on the registration date.
-- Prototype replay: every cold app launch or browser reload opens Welcome, including for returning users. Build my week revisits baseline with saved answers; the Continue saved plan button has been removed. Welcome uses a plain Rimbun-green background and a single-leaf motif. Backgrounding alone does not reset an unfinished form. Saved commitments, modules, diary and streak are retained.
+- Prototype replay: every cold app launch or browser reload opens Welcome, including for returning users. Build my week revisits baseline with saved answers; the Continue saved plan button has been removed. Welcome uses a plain Rimbun-green background with a centred leaf, Santai name and message, retaining the Build my week button below. Backgrounding alone does not reset an unfinished form. Saved commitments, modules, diary and streak are retained.
 
 ### Timetable and assignments
 
@@ -37,7 +37,7 @@ Updated 12 September 2026 (1.1.3). Expo SDK 57, React Native and TypeScript. And
 
 - Daily / Weekly switching is in the hamburger menu, together with Schedule and Assignments.
 - Live capacity estimates for time, mental, physical and social; energy out of 100; check-in streak avatar.
-- A single-stem, single-leaf energy visual sits directly on the forest background above the cream dashboard sheet. Low energy makes the leaf smaller, dry amber and drooping; higher energy makes it larger, upright and green. The numeric estimate and plain-language label remain visible; colour is not the only indicator. Rimbun greens and the forest-floor navigation are retained.
+- A broad, curved single leaf with a curled tip matches the approved dashboard reference. Its gentle breeze animation respects reduced-motion settings. Compact icon / label / bar / percentage rows display the four capacities. The single-stem energy visual sits directly on the forest background above the cream dashboard sheet. Low energy makes the leaf smaller, dry amber and drooping; higher energy makes it larger, upright and green. The numeric estimate and plain-language label remain visible; colour is not the only indicator. Rimbun greens and the forest-floor navigation are retained.
 - An original leaf-shaped streak pet floats at the bottom-right above navigation on the four main pages. Drag to reposition within the screen above navigation; tap for a short streak message. With no active streak, the pet has angled eyebrows and a frown; an active streak restores its smile. Screen readers can move it left/right using accessibility actions. Gentle bobbing respects system reduced-motion settings; scroll padding keeps final actions reachable.
 - A compact missing-check-in banner appears from the day after registration; a saved check-in can be updated.
 - The flashcard banner displays today's module names from the timetable, with an upload entry point when the library is empty.

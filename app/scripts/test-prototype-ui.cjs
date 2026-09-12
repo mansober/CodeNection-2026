@@ -23,7 +23,16 @@ const server = http.createServer((req,res) => { const file = path.join(root, dec
  };
  const snapshot = name => page.screenshot({path:path.join(output,`margin-v2-${name}.png`)});
  try {
-  await page.goto('http://127.0.0.1:4173'); await page.getByRole('button',{name:'Build my week',exact:true}).waitFor(); await snapshot('welcome'); assert.equal(await page.getByRole('button',{name:'Continue saved plan',exact:true}).count(),0); await click('Build my week');
+  await page.goto('http://127.0.0.1:4173'); await page.getByRole('button',{name:'Build my week',exact:true}).waitFor(); await snapshot('welcome');
+  const sway=page.locator('[style*="rotate("]').first();
+  const beforeMotion=await sway.evaluate(el=>getComputedStyle(el).transform);
+  await page.waitForTimeout(350);
+  assert.notEqual(await sway.evaluate(el=>getComputedStyle(el).transform),beforeMotion,'Leaf sways');
+  await page.emulateMedia({reducedMotion:'reduce'}); await page.waitForTimeout(200);
+  const still=await sway.evaluate(el=>getComputedStyle(el).transform);
+  await page.waitForTimeout(350); assert.equal(await sway.evaluate(el=>getComputedStyle(el).transform),still,'Reduced motion stops sway');
+  await page.emulateMedia({reducedMotion:'no-preference'});
+  assert.equal(await page.getByRole('button',{name:'Continue saved plan',exact:true}).count(),0); await click('Build my week');
   assert.equal(await page.getByRole('checkbox',{name:'Classes / lectures',exact:true}).getAttribute('aria-checked'),'true');
   assert.equal(await page.getByRole('checkbox',{name:'Assignments & study',exact:true}).getAttribute('aria-checked'),'true');
   await page.getByRole('checkbox',{name:'Gym or sport',exact:true}).click(); await click('Add weekly hours');

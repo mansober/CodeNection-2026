@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 
-import { AppButton, BottomNav, CapacityBar, Card, FormField, InlineNotice, PageHeader, ScrollPage, SectionLabel, SegmentedChoices } from "@/components/MarginUI";
+import { AppButton, BottomNav, Card, FormField, InlineNotice, PageHeader, ScrollPage, SectionLabel, SegmentedChoices } from "@/components/MarginUI";
 import { DateField, ValueSlider, ViewMenu } from "@/components/PlannerControls";
 import { CapacityValue, Commitment, MainTab, capacityMeta } from "@/models/margin";
 import { dateKey, planActions, prettyDate, shiftDate, weekStart } from "@/models/planner";
 import { screenStyles as s } from "./screenStyles";
+import { DashboardCapacities } from "@/components/DashboardCapacities";
 import { EnergyLeaf } from "@/components/EnergyLeaf";
 import { colors, fonts } from "@/theme/tokens";
 
@@ -24,7 +25,7 @@ export function CurrentHomeScreen({ period, onPeriod, onSchedule, onAssignments,
     <EnergyLeaf energy={energy} />
     <View style={s.content}>
       {checkInEligible && <View style={[s.rowBetween, { backgroundColor: colors.mint, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 2 }]}><Text style={[s.bodySmall, s.flex]}>{checkInSaved ? "Today’s check-in is saved" : "You haven’t checked in today"}</Text><AppButton text={checkInSaved ? "Update" : "Check in"} variant="quiet" style={{ minHeight: 48, paddingHorizontal: 12 }} onPress={onCheckIn} /></View>}
-      <SectionLabel>Your four capacities</SectionLabel>{capacities.map(value => <CapacityBar key={value.kind} value={value} />)}
+      <SectionLabel>Your four capacities</SectionLabel><DashboardCapacities values={capacities} />
       <View style={{ gap: 10 }}><Text style={s.caption}>A planning estimate, not a health measurement. Completing today’s recovery adds 10 energy, once per day.</Text>{!checkInEligible && <Text style={s.bodySmallMuted}>You’re all set for today. Your first daily check-in starts tomorrow.</Text>}</View>
       <Card tone="dark" style={{ gap: 8 }}><Text style={s.whiteBody}>{period === "Daily" ? "TODAY’S LOAD" : "WEEKLY AVERAGE LOAD"}</Text><Text style={{ fontFamily: fonts.number, fontSize: 46, color: colors.white }}>{overall}%</Text><Text style={s.whiteBody}>{overall >= 85 ? "Your plan is asking a lot. Make room for a break." : overall >= 60 ? "A steady day. Keep a little space for yourself." : "There’s room to move at your own pace."}</Text></Card>
       <Pressable accessibilityRole="button" accessibilityLabel="Open daily flashcards" onPress={onFlashcards}><Card tone="amber" style={{ gap: 10 }}><Text style={s.eyebrow}>DAILY FLASHCARDS</Text><Text style={s.title}>{hasMaterials ? "A little revision for today" : "+ Upload your learning materials"}</Text><Text style={s.body}>{lessonNames.length ? lessonNames.join(" · ") : "No classes scheduled today. Explore your library."}</Text><Text style={s.bodySmallMuted}>{hasMaterials ? "Open your module cards and practise at your pace." : "Upload your learning materials for daily flashcards."}</Text><Text style={s.linkText}>{hasMaterials ? "Open flashcards →" : "Add learning materials →"}</Text></Card></Pressable>

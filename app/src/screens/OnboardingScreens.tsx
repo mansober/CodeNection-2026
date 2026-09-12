@@ -11,7 +11,6 @@ import {
   CompactStepper,
   FormField,
   InlineNotice,
-  MarginMark,
   PageHeader,
   ProgressBar,
   ScrollPage,
@@ -41,14 +40,11 @@ import { screenStyles as s } from "@/screens/screenStyles";
 export function WelcomeScreen({ onStart }: { onStart: () => void }) {
   return (
     <ScrollPage plain contentStyle={styles.welcomePage}>
-      <View style={styles.brandRow}>
-        <MarginMark size={24} />
-        <Text style={styles.brandName}>SANTAI</Text>
-      </View>
       <View style={styles.welcomeHero}>
+        <View style={{ width: "100%", maxWidth: 270 }}><LeafIllustration energy={100} height={240} /></View>
+        <Text style={styles.brandName}>SANTAI</Text>
         <Text accessibilityRole="header" style={styles.display}>Know the cost{"\n"}before you say yes.</Text>
         <Text style={styles.lead}>A weekly capacity planner for classes, clubs, work, and the rest of your life.</Text>
-        <LeafIllustration energy={100} height={210} />
       </View>
       <View style={styles.welcomeFooter}>
         <AppButton text="Build my week" onPress={onStart} />
@@ -248,10 +244,10 @@ export function AnythingElseScreen({ initialNote, onBack, onContinue }: { initia
 const styles = StyleSheet.create({
   welcomePage: { paddingHorizontal: 24, paddingTop: 22, paddingBottom: 24, justifyContent: "space-between", minHeight: 680 },
   brandRow: { flexDirection: "row", alignItems: "center", gap: 12 },
-  brandName: { ...type.eyebrow, color: colors.white, letterSpacing: 2.3 },
-  welcomeHero: { gap: 18, marginVertical: 24 },
-  display: { ...type.display, color: colors.white },
-  lead: { ...type.body, color: colors.mint, maxWidth: 420 },
+  brandName: { fontFamily: fonts.bold, fontSize: 30, lineHeight: 38, color: colors.white, letterSpacing: 1 },
+  welcomeHero: { flex: 1, justifyContent: "center", alignItems: "center", gap: 12, paddingVertical: 36 },
+  display: { fontFamily: fonts.bold, fontSize: 25, lineHeight: 32, color: colors.white, textAlign: "center" },
+  lead: { ...type.bodySmall, color: colors.mint, maxWidth: 290, textAlign: "center" },
   capacitySculpture: { height: 108, flexDirection: "row", alignItems: "flex-end", gap: 7, marginTop: 12 },
   sculptureBar: { flex: 1, borderRadius: 5, padding: 9, justifyContent: "flex-end" },
   sculptureLabel: { fontFamily: fonts.bold, fontSize: 18 },
