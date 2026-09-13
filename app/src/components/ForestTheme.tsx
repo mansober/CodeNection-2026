@@ -18,7 +18,7 @@ export function ForestBackdrop() {
 
 // An original S-shaped resting river, beneath two leaves: Santai's mark.
 export function SantaiLogo({ size = 36, light = false }: { size?: number; light?: boolean }) {
-  return <Svg width={size} height={size} viewBox="0 0 100 100" accessibilityElementsHidden>
+  return <Svg width={size} height={size} viewBox="0 0 100 100" accessible={false}>
     <Path d="M70 26C42 13 24 29 32 44C38 56 72 47 71 64C70 78 43 86 27 73" stroke={light ? colors.white : colors.forest} strokeWidth={12} strokeLinecap="round" fill="none" />
     <Path d="M51 21C38 21 33 11 36 4C47 4 56 10 51 21Z" fill={colors.moss} />
     <Path d="M54 20C54 9 63 4 73 7C70 18 63 23 54 20Z" fill={light ? colors.waterBright : colors.waterDeep} />

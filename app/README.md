@@ -12,6 +12,18 @@ npx expo start
 
 Press `a` for Android or `w` for web. On a physical Android or iPhone, open Expo Go and scan the QR code. The iOS Simulator requires macOS.
 
+## Backend connection
+
+Copy `.env.example` to `.env.local` and set `EXPO_PUBLIC_API_URL` for the target device. Use `http://127.0.0.1:8000` for web on this computer, normally `http://10.0.2.2:8000` for an Android emulator, or the development computer's LAN IP for a physical phone. A physical phone also requires the Compose backend to be bound to the trusted LAN; see the repository README.
+
+The app begins with a normal email/password sign-up or sign-in page. Native session tokens use Expo SecureStore; web tokens use browser storage. Each account gets its own device-storage key and user-owned database records. Changes—including partially completed onboarding—save locally first, then a coalescing sync writes the normalized baseline, module, assignment, commitment, check-in, note, and recovery endpoints. If the API becomes unavailable after sign-in, local persistence continues, the app shows a non-blocking sync notice, and retries transient failures with bounded exponential backoff.
+
+Startup uses the normalized backend as the source of truth. The former `/v1/planner-state` snapshot is read only to migrate accounts created by earlier builds. Compact local fingerprints protect unsynced offline edits during startup. Resources carry optimistic versions so a stale client cannot silently replace or delete a newer edit; on conflict, the app reloads the newer backend state. A five-second plan-revision poll refreshes changes made by another signed-in device.
+
+Check-in notes, check-in causes, and device-local material URIs stay on the device. Timetable and learning-material file upload/AI parsing are not part of this connection yet.
+
+For a recovery check on web, finish onboarding and wait for the sync notice to clear, then remove only the signed-in user's `margin-planner-v3-<user-id>` browser-storage entry while leaving `santai-api-session-v2` intact. Reloading should reconstruct the plan from the normalized API resources.
+
 Expo Go is only the fast development workflow. Santai is also configured as its own Android application with package ID `com.codenection.margin`. A standalone release embeds the JavaScript bundle and assets, so it runs without Expo Go and without a Metro server.
 
 ## Standalone Android app
@@ -42,7 +54,7 @@ npm run export:web
 ## Key implementation rules
 
 - `src/app/` contains only Expo Router entry points.
-- `src/features/margin/MarginApp.tsx` owns the locally persisted prototype flow and state.
+- `src/features/margin/MarginApp.tsx` owns authentication gating and the local-first flow; `src/services/api.ts` handles account sessions and authenticated transport, while `src/services/planningApi.ts` maps UI state to normalized planning resources and backend-computed views.
 - shared controls and the vector system live in `src/components/`.
 - no operating-system emoticon glyphs are used for Check-in states.
 - visible UI text is 13px or larger and primary touch targets are at least 48dp.
@@ -56,4 +68,4 @@ npm run export:web
 
 See [HANDOFF.md](HANDOFF.md) for the current user flows, active page inventory, state ownership, code map, and known boundaries.
 
-Run `node scripts/test-planner.cjs` for planner model regression checks.
+Run `npm run check` for type, lint, planner-model, legacy-migration, and normalized API adapter checks.

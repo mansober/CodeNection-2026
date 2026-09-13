@@ -6,7 +6,7 @@ from typing import Annotated, Literal
 from uuid import UUID
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from pydantic import BaseModel, ConfigDict, Field, StrictBool, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, StrictBool, field_validator, model_validator
 
 
 class Input(BaseModel):
@@ -47,7 +47,27 @@ class Effort(Input):
     social: Rating
 
 
-class GuestCreate(Input):
+class AuthInput(BaseModel):
+    # Passwords are intentionally not stripped or otherwise rewritten.
+    model_config = ConfigDict(extra="forbid")
+
+    email: EmailStr = Field(max_length=320)
+    password: str = Field(min_length=8, max_length=128)
+
+    @field_validator("email", mode="before")
+    @classmethod
+    def normalize_email(cls, value):
+        return value.strip().casefold() if isinstance(value, str) else value
+
+    @field_validator("password")
+    @classmethod
+    def meaningful_password(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("Password cannot contain only whitespace")
+        return value
+
+
+class SignUpCreate(AuthInput):
     timezone: str = Field(min_length=1, max_length=64)
 
     @field_validator("timezone")
@@ -60,8 +80,13 @@ class GuestCreate(Input):
         return value
 
 
+class SignInCreate(AuthInput):
+    pass
+
+
 class UserRead(Output):
     id: UUID
+    email: str
     timezone: str
     registered_on: date
     plan_revision: int
@@ -337,6 +362,7 @@ class Occurrence(Output):
     skipped: bool = False
     helper_note: str | None = None
     estimated: bool = False
+    action: Literal["move", "skip", "lighten", "ask_help"] | None = None
 
 
 class CapacityRead(Output):
@@ -505,4 +531,5 @@ class ExportRead(Output):
     recovery: list[RecoveryRead]
     materials: list[MaterialRead]
     flashcards: list[CardRead]
+    planner_state: dict | None
     original_files: str

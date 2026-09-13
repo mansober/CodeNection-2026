@@ -38,7 +38,7 @@ def current_user(
     if token is None:
         fail("unauthenticated", "Session is invalid or expired", 401)
     user = db.get(User, token.user_id)
-    if user is None:
+    if user is None or user.email is None or user.password_hash is None:
         fail("unauthenticated", "Session is invalid or expired", 401)
     return user
 

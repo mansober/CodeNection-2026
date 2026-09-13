@@ -35,6 +35,18 @@ def baseline(client):
     return result.json()
 
 
+def test_first_baseline_marks_setup_date_for_check_in_eligibility(client, auth, db):
+    user = db.get(User, UUID(auth["user"]["id"]))
+    signup_day = today(auth)
+    user.registered_on = signup_day - timedelta(days=5)
+    db.commit()
+
+    baseline(client)
+
+    db.refresh(user)
+    assert user.registered_on == signup_day
+
+
 def commitment(day, **extra):
     return {
         "name": "Club practice",
@@ -95,6 +107,10 @@ def test_api_schema_and_health(client):
     assert client.get("/ready").json() == {"status": "ready"}
     schema = client.get("/openapi.json").json()
     assert "/v1/planner/what-if" in schema["paths"]
+    assert "/v1/auth/signup" in schema["paths"]
+    assert "/v1/auth/signin" in schema["paths"]
+    assert "/v1/planner-state" in schema["paths"]
+    assert "/v1/auth/guest" not in schema["paths"]
     assert "discriminator" in schema["components"]["schemas"]["CommitmentWrite"]["properties"]["schedule"]
     day_fields = schema["components"]["schemas"]["DayRead"]["properties"]
     assert "energy_score" in day_fields and "planning_room_score" not in day_fields
@@ -104,10 +120,14 @@ def test_api_schema_and_health(client):
     )
 
 
-def test_guest_token_is_hashed_rotates_and_logs_out(client, auth, db):
+def test_account_password_and_token_are_hashed_then_session_rotates_and_logs_out(client, auth, db):
     token = auth["access_token"]
     hashes = list(db.scalars(select(SessionToken.token_hash)))
     assert token not in hashes and all(len(value) == 64 for value in hashes)
+    user = db.scalar(select(User).where(User.email == "planner@example.com"))
+    assert user is not None
+    assert user.password_hash != "correct-horse-battery-staple"
+    assert user.password_hash.startswith("$argon2")
     rotated = client.post("/v1/auth/refresh")
     assert rotated.status_code == 200
     assert client.get("/v1/me").status_code == 401
@@ -117,10 +137,53 @@ def test_guest_token_is_hashed_rotates_and_logs_out(client, auth, db):
     assert client.get("/v1/me").status_code == 401
 
 
+def test_signup_signin_validation_and_duplicate_email(client):
+    payload = {
+        "email": "  Student@Example.COM  ",
+        "password": "a secure password",
+        "timezone": "Asia/Singapore",
+    }
+    created = client.post("/v1/auth/signup", json=payload)
+    assert created.status_code == 201, created.text
+    assert created.json()["user"]["email"] == "student@example.com"
+    assert client.post("/v1/auth/signup", json=payload).status_code == 409
+
+    signed_in = client.post(
+        "/v1/auth/signin",
+        json={"email": "STUDENT@example.com", "password": "a secure password"},
+    )
+    assert signed_in.status_code == 200, signed_in.text
+    assert signed_in.json()["user"]["id"] == created.json()["user"]["id"]
+
+    for invalid in (
+        {"email": "student@example.com", "password": "wrong password"},
+        {"email": "missing@example.com", "password": "wrong password"},
+    ):
+        response = client.post("/v1/auth/signin", json=invalid)
+        assert response.status_code == 401
+        assert response.json()["detail"]["code"] == "invalid_credentials"
+
+    assert client.post(
+        "/v1/auth/signup",
+        json={"email": "not-an-email", "password": "long enough", "timezone": "UTC"},
+    ).status_code == 422
+    assert client.post(
+        "/v1/auth/signup",
+        json={"email": "valid@example.com", "password": "short", "timezone": "UTC"},
+    ).status_code == 422
+    assert client.post(
+        "/v1/auth/signup",
+        json={"email": "valid@example.com", "password": "        ", "timezone": "UTC"},
+    ).status_code == 422
+
+
 def test_ownership_for_read_write_and_relations(client, auth):
     first = module(client)
     first_token = auth["access_token"]
-    second = client.post("/v1/auth/guest", json={"timezone": "UTC"}).json()
+    second = client.post(
+        "/v1/auth/signup",
+        json={"email": "second@example.com", "password": "second-password", "timezone": "UTC"},
+    ).json()
     client.headers["Authorization"] = "Bearer " + second["access_token"]
     assert client.get("/v1/modules").json() == []
     assert (
@@ -301,8 +364,10 @@ def test_actions_compose_restore_and_only_change_one_occurrence(client, auth):
     baseline(client)
     row = create_commitment(client, commitment(day, schedule={"kind": "daily", "start_date": str(day)}))
     original = next(i for i in plan(client, day)["days"][0]["occurrences"] if i["source_id"] == row["id"])
-    assert action(client, original, "move", target_date=str(day + timedelta(days=1))).status_code == 200
-    assert action(client, original, "lighten", duration_minutes=30).status_code == 200
+    moved = action(client, original, "move", target_date=str(day + timedelta(days=1)))
+    assert moved.status_code == 200 and moved.json()["action"] == "move"
+    lightened = action(client, original, "lighten", duration_minutes=30)
+    assert lightened.status_code == 200 and lightened.json()["action"] == "lighten"
     tomorrow = plan(client, day + timedelta(days=1))["days"][0]
     same_series = [i for i in tomorrow["occurrences"] if i["source_id"] == row["id"]]
     assert sorted(i["duration_minutes"] for i in same_series) == [30, 60]
@@ -501,7 +566,10 @@ def test_material_roundtrip_cards_and_private_download(client, auth):
     assert len(client.get("/v1/flashcards").json()) == 2
     file_url = f"/v1/materials/{material['id']}/file"
     assert client.get(file_url).content == raw
-    second = client.post("/v1/auth/guest", json={"timezone": "UTC"}).json()
+    second = client.post(
+        "/v1/auth/signup",
+        json={"email": "second@example.com", "password": "second-password", "timezone": "UTC"},
+    ).json()
     assert (
         client.get(file_url, headers={"Authorization": "Bearer " + second["access_token"]}).status_code == 404
     )
@@ -565,6 +633,8 @@ def test_export_excludes_secrets_and_deletion_removes_owned_data(client, auth, d
     assert (
         auth["access_token"] not in data.text
         and "token_hash" not in data.text
+        and "password_hash" not in data.text
+        and "correct-horse-battery-staple" not in data.text
         and "storage_key" not in data.text
     )
     assert client.delete("/v1/me").status_code == 204

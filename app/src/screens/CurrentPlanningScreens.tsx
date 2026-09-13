@@ -4,8 +4,9 @@ import { Animated, Easing, KeyboardAvoidingView, Modal, Platform, Pressable, Scr
 import { MarginIcon } from "@/components/MarginIcon";
 import { AppButton, BottomNav, Card, FormField, InlineNotice, ScrollPage, SegmentedChoices } from "@/components/MarginUI";
 import { DateField, ValueSlider } from "@/components/PlannerControls";
-import { CapacityValue, Commitment, MainTab, QuickAddAction, capacityMeta, formatHours } from "@/models/margin";
-import { dateKey, fromKey, planActions, prettyDate, rankedRecoveryOptions, shiftDate } from "@/models/planner";
+import { CapacityKind, CapacityValue, Commitment, MainTab, QuickAddAction, capacityMeta, formatHours } from "@/models/margin";
+import { dateKey, fromKey, planActions, prettyDate, rankedRecoveryOptions, recoveryLibrary, shiftDate } from "@/models/planner";
+import type { PlannerRecoverySuggestion } from "@/services/planningApi";
 import { screenStyles as s } from "./screenStyles";
 import { DashboardLoadSummary } from "@/components/DashboardCapacities";
 import { EnergyLeaf } from "@/components/EnergyLeaf";
@@ -281,12 +282,35 @@ type RecoveryDayInsight = {
   loadDescriptor: "Light" | "Moderate" | "Heavy";
 };
 
-function recoveryInsight(day: PlanDay): RecoveryDayInsight {
-  const recommendation = rankedRecoveryOptions(day.capacities);
+function recoveryInsight(day: PlanDay, server?: PlannerRecoverySuggestion): RecoveryDayInsight {
+  let recommendation = rankedRecoveryOptions(day.capacities);
+  if (server) {
+    const forcedKind = server.recommendationCode.startsWith("rest_")
+      ? server.recommendationCode.slice(5) as CapacityKind
+      : recommendation.focus;
+    const optionId = server.recommendationCode === "quiet_pause"
+      ? "microbreak"
+      : forcedKind === "physical"
+        ? "nothing"
+        : forcedKind === "social"
+          ? "alone"
+          : forcedKind === "time"
+            ? "plan"
+            : "outside";
+    const selected = recoveryLibrary.find(option => option.id === optionId);
+    if (selected) {
+      const primary = server.suggestedMinutes ? { ...selected, duration: `${server.suggestedMinutes} min` } : selected;
+      recommendation = {
+        ...recommendation,
+        focus: (["time", "mental", "physical", "social"] as CapacityKind[]).includes(forcedKind) ? forcedKind : recommendation.focus,
+        options: [primary, ...recommendation.options.filter(option => option.id !== primary.id)],
+      };
+    }
+  }
   const focusCapacity = day.capacities.find(value => value.kind === recommendation.focus);
   const focusPercent = Math.round((focusCapacity?.used ?? 0) / Math.max(1, focusCapacity?.limit ?? 1) * 100);
   const loadDescriptor = day.load >= 85 ? "Heavy" : day.load >= 60 ? "Moderate" : "Light";
-  return { day, recommendation, focusPercent, needsRecovery: day.load >= RECOVERY_LOAD_THRESHOLD, loadDescriptor };
+  return { day, recommendation, focusPercent, needsRecovery: server ? server.suggestedMinutes > 0 : day.load >= RECOVERY_LOAD_THRESHOLD, loadDescriptor };
 }
 
 function shortWeekday(date: string) {
@@ -438,8 +462,8 @@ function SelectedRecoveryDetail({ insight, result, whyOpen, onWhy, onResult, onP
   </View>;
 }
 
-export function CurrentRecoveryScreen({ days, results, onResult, onPlan, onTab, onQuickAdd }: { days: PlanDay[]; results: Record<string, { done: boolean; feeling?: string }>; onResult: (key: string, value: { done: boolean; feeling?: string }) => void; onPlan: (date: string) => void; onTab: (tab: MainTab) => void; onQuickAdd: (action: QuickAddAction) => void }) {
-  const chronological = [...days].filter(day => day.date >= dateKey()).sort((a, b) => a.date.localeCompare(b.date)).map(recoveryInsight);
+export function CurrentRecoveryScreen({ days, suggestions = [], results, onResult, onPlan, onTab, onQuickAdd }: { days: PlanDay[]; suggestions?: PlannerRecoverySuggestion[]; results: Record<string, { done: boolean; feeling?: string }>; onResult: (key: string, value: { done: boolean; feeling?: string }) => void; onPlan: (date: string) => void; onTab: (tab: MainTab) => void; onQuickAdd: (action: QuickAddAction) => void }) {
+  const chronological = [...days].filter(day => day.date >= dateKey()).sort((a, b) => a.date.localeCompare(b.date)).map(day => recoveryInsight(day, suggestions.find(item => item.date === day.date)));
   const priority = chronological.filter(insight => insight.needsRecovery).sort((a, b) => b.day.load - a.day.load || a.day.date.localeCompare(b.day.date));
   const initialDate = priority[0]?.day.date ?? chronological[0]?.day.date ?? "";
   const [selectedDate, setSelectedDate] = useState(initialDate);

@@ -66,7 +66,14 @@ def client(db, tmp_path, monkeypatch):
 
 @pytest.fixture
 def auth(client):
-    result = client.post("/v1/auth/guest", json={"timezone": "Asia/Kuala_Lumpur"})
+    result = client.post(
+        "/v1/auth/signup",
+        json={
+            "email": "planner@example.com",
+            "password": "correct-horse-battery-staple",
+            "timezone": "Asia/Kuala_Lumpur",
+        },
+    )
     assert result.status_code == 201, result.text
     client.headers["Authorization"] = "Bearer " + result.json()["access_token"]
     return result.json()

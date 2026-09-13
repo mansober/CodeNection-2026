@@ -106,6 +106,9 @@ def save_baseline(payload: BaselineWrite, db: DB, user: Actor):
         limits=calibrate(payload),
         policy_version=POLICY_VERSION,
     )
+    if previous is None:
+        # Check-in eligibility starts after setup, not merely after account creation.
+        user.registered_on = local_today(user)
     db.add(row)
     changed(db, user)
     return baseline_read(row)
@@ -470,6 +473,7 @@ def apply_action(payload: ActionWrite, db: DB, user: Actor):
         item.duration_minutes = payload.duration_minutes
     else:
         item.helper_note = payload.helper_note or "Help requested"
+    item.action = payload.action
     row = old or OccurrenceOverride(
         user_id=user.id,
         occurrence_key=item.key,

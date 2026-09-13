@@ -12,6 +12,7 @@ from app.models import (
     Material,
     Module,
     OccurrenceOverride,
+    PlannerStateRecord,
     Recovery,
     SessionToken,
     User,
@@ -41,6 +42,9 @@ def export_data(db: DB, user: Actor):
     def rows(model):
         return list(db.scalars(select(model).where(model.user_id == user.id).order_by(model.id)))
 
+    planner_state = db.scalar(
+        select(PlannerStateRecord).where(PlannerStateRecord.user_id == user.id)
+    )
     return {
         "schema_version": 1,
         "user": UserRead.model_validate(user),
@@ -65,6 +69,16 @@ def export_data(db: DB, user: Actor):
         ],
         "materials": [MaterialRead.model_validate(r) for r in rows(Material)],
         "flashcards": [CardRead.model_validate(r) for r in rows(Flashcard)],
+        "planner_state": (
+            {
+                "schema_version": planner_state.schema_version,
+                "state": planner_state.data,
+                "version": planner_state.version,
+                "updated_at": planner_state.updated_at,
+            }
+            if planner_state
+            else None
+        ),
         "original_files": "Download each material through /v1/materials/{id}/file before deleting your account.",
     }
 
@@ -85,6 +99,7 @@ def delete_account(db: DB, user: Actor):
         CheckIn,
         WeeklyNote,
         Recovery,
+        PlannerStateRecord,
         Baseline,
         SessionToken,
     ):

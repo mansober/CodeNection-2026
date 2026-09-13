@@ -358,12 +358,38 @@ export function AssignmentsScreen({ modules, materials, initialModuleId, onBack,
   </ScrollPage>;
 }
 
-export function ProfileScreen({ streak, commitments, modules, routines, answers, onTab, onQuickAdd, onBaseline }: { streak: number; commitments: Commitment[]; modules: Module[]; routines: Record<string, RoutineEntry>; answers: Partial<Record<CapacityKind, number>>; onTab: (tab: MainTab) => void; onQuickAdd: (action: QuickAddAction) => void; onBaseline: () => void }) {
+export function ProfileScreen({ email, onSignOut, onExport, onDeleteAccount, streak, commitments, modules, routines, answers, onTab, onQuickAdd, onBaseline }: { email: string; onSignOut: () => void; onExport: () => Promise<string>; onDeleteAccount: () => Promise<void>; streak: number; commitments: Commitment[]; modules: Module[]; routines: Record<string, RoutineEntry>; answers: Partial<Record<CapacityKind, number>>; onTab: (tab: MainTab) => void; onQuickAdd: (action: QuickAddAction) => void; onBaseline: () => void }) {
   const routineHours = Object.values(routines).reduce((sum, entry) => sum + weeklyHours(entry), 0);
+  const [accountBusy, setAccountBusy] = useState(false);
+  const [accountNotice, setAccountNotice] = useState("");
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const exportData = async () => {
+    setAccountBusy(true);
+    try {
+      const location = await onExport();
+      setAccountNotice(`Account export saved: ${location}`);
+    } catch (error) {
+      setAccountNotice(error instanceof Error ? error.message : "Your account export could not be created.");
+    } finally {
+      setAccountBusy(false);
+    }
+  };
+  const deleteAccount = async () => {
+    setAccountBusy(true);
+    try {
+      await onDeleteAccount();
+    } catch (error) {
+      setAccountNotice(error instanceof Error ? error.message : "Your account could not be deleted.");
+      setConfirmDelete(false);
+      setAccountBusy(false);
+    }
+  };
   return <ScrollPage bottomBar={<BottomNav selected="profile" onSelect={onTab} onQuickAdd={onQuickAdd} />}><PageHeader hideMark eyebrow="Profile" title="The person behind the plan" body="Your baseline, preferences and private planning context live here." /><View style={s.content}>
     <Card tone="mint" style={{ alignItems: "center", gap: 10, paddingVertical: 22 }}><View style={{ borderRadius: 30, borderWidth: 3, borderColor: colors.paper }}><MascotAvatar size={116} /></View><Text style={s.title}>Your Santai companion</Text><Text style={[s.bodySmallMuted, { textAlign: "center" }]}>Tap the mascot on any main page for a small encouragement.</Text><View style={[s.wrapRow, { justifyContent: "center" }]}><View style={s.badge}><Text style={s.badgeText}>{streak} DAY STREAK</Text></View><View style={s.badge}><Text style={s.badgeText}>{commitments.length} PLANS</Text></View><View style={s.badge}><Text style={s.badgeText}>{modules.length} MODULES</Text></View></View></Card>
+    <Card style={{ gap: 10 }}><Text style={s.title}>Account</Text><Text style={s.bodySmallMuted}>Signed in as {email}</Text>{accountNotice ? <InlineNotice title="Account data" body={accountNotice} /> : null}<AppButton text={accountBusy ? "Preparing export…" : "Download my data"} variant="secondary" disabled={accountBusy} onPress={exportData} /><AppButton text="Sign out" variant="quiet" disabled={accountBusy} onPress={onSignOut} /></Card>
     <Card style={{ gap: 10, borderLeftWidth: 5, borderLeftColor: colors.waterDeep }}><View style={s.rowBetween}><Text style={s.title}>Normal-week baseline</Text><Text style={[s.label, { color: colors.waterDeep }]}>{formatHours(routineHours)}</Text></View>{routineCatalog.filter(item => routines[item.id]).map(item => <View key={item.id} style={s.rowBetween}><Text style={s.bodySmall}>{item.label}</Text><Text style={s.caption}>{formatHours(weeklyHours(routines[item.id]))}</Text></View>)}<AppButton text="Revisit my baseline" variant="quiet" onPress={onBaseline} /></Card>
     <SectionLabel>Personal capacity answers</SectionLabel><View style={s.wrapRow}>{(Object.keys(capacityMeta) as CapacityKind[]).map(kind => <Card key={kind} style={{ width: "48%", flexGrow: 1, gap: 5, borderTopWidth: 4, borderTopColor: capacityMeta[kind].color }}><Text style={[s.eyebrow, { color: capacityMeta[kind].color }]}>{capacityMeta[kind].label.toUpperCase()}</Text><Text style={s.label}>{answers[kind] === undefined ? "Uses a balanced default" : `Answer ${answers[kind]! + 1} of 4`}</Text></Card>)}</View>
+    <Card tone="coral" style={{ gap: 10 }}><Text style={s.title}>Delete account</Text>{confirmDelete ? <><Text style={s.bodySmall}>This permanently removes your account and backend planner data. Download your data first if you want a copy.</Text><AppButton text="Keep my account" variant="quiet" disabled={accountBusy} onPress={() => setConfirmDelete(false)} /><AppButton text={accountBusy ? "Deleting account…" : "Permanently delete account"} variant="warning" disabled={accountBusy} onPress={deleteAccount} /></> : <><Text style={s.bodySmallMuted}>Permanently remove your account and all server-side planner data.</Text><AppButton text="Delete my account" variant="warning" disabled={accountBusy} onPress={() => setConfirmDelete(true)} /></>}</Card>
   </View></ScrollPage>;
 }
 

@@ -8,6 +8,9 @@ export type CapacityValue = {
 
 export type Commitment = {
   id: string;
+  serverId?: string;
+  serverVersion?: number;
+  occurrenceKey?: string;
   name: string;
   category: string;
   schedule: string;
@@ -19,6 +22,7 @@ export type Commitment = {
   startDate?: string;
   dueDate?: string;
   moduleId?: string;
+  assignmentId?: string;
   routineId?: string;
   action?: string;
   durationHours?: number;

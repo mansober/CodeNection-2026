@@ -6,7 +6,7 @@ from app.core.request_limits import RequestSizeLimit
 
 def test_declared_oversized_body_returns_413_with_cors(client, monkeypatch):
     monkeypatch.setattr(settings, "max_json_bytes", 32)
-    result = client.post("/v1/auth/guest", content=b"x" * 33, headers={"Origin": "http://localhost:8081"})
+    result = client.post("/v1/auth/signup", content=b"x" * 33, headers={"Origin": "http://localhost:8081"})
     assert result.status_code == 413
     assert result.headers["Access-Control-Allow-Origin"] == "http://localhost:8081"
     assert result.headers["Cache-Control"] == "no-store"
@@ -32,6 +32,6 @@ def test_chunked_body_is_bounded_before_application_runs(monkeypatch):
         sent.append(event)
 
     asyncio.run(
-        RequestSizeLimit(downstream)({"type": "http", "path": "/v1/auth/guest", "headers": []}, receive, send)
+        RequestSizeLimit(downstream)({"type": "http", "path": "/v1/auth/signup", "headers": []}, receive, send)
     )
     assert calls == [] and sent[0]["status"] == 413

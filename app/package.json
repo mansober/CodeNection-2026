@@ -10,6 +10,7 @@
     "expo-font": "~57.0.3",
     "expo-linking": "~57.0.10",
     "expo-router": "~57.0.21",
+    "expo-secure-store": "~57.0.4",
     "expo-splash-screen": "~57.0.9",
     "expo-status-bar": "~57.0.1",
     "react": "19.2.3",
@@ -33,7 +34,10 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
-    "check": "npm run typecheck && npm run lint",
+    "test:planner": "node scripts/test-planner.cjs",
+    "test:cloud": "node scripts/test-cloud-state.cjs",
+    "test:api": "node scripts/test-planning-api.cjs",
+    "check": "npm run typecheck && npm run lint && npm run test:planner && npm run test:cloud && npm run test:api",
     "export:web": "expo export --platform web"
   },
   "private": true

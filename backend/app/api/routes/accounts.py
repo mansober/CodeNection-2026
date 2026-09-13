@@ -4,12 +4,13 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends
 from fastapi.security import HTTPAuthorizationCredentials
-from sqlalchemy import delete
+from sqlalchemy import delete, select
 
-from app.api.dependencies import DB, Actor, bearer, local_today, lock_user, token_digest
+from app.api.dependencies import DB, Actor, bearer, fail, local_today, lock_user, token_digest
 from app.core.config import settings
 from app.models.domain import SessionToken, User, utcnow
-from app.schemas.domain import GuestCreate, SessionRead, UserRead
+from app.schemas.domain import SessionRead, SignInCreate, SignUpCreate, UserRead
+from app.services.auth import hash_password, verify_password
 
 router = APIRouter(prefix="/v1", tags=["accounts"])
 
@@ -22,12 +23,23 @@ def issue_session(db, user):
     return SessionRead(access_token=token, expires_at=expiry, user=UserRead.model_validate(user))
 
 
-@router.post("/auth/guest", response_model=SessionRead, status_code=201)
-def guest(payload: GuestCreate, db: DB):
-    user = User(timezone=payload.timezone)
+@router.post("/auth/signup", response_model=SessionRead, status_code=201)
+def signup(payload: SignUpCreate, db: DB):
+    email = str(payload.email)
+    if db.scalar(select(User.id).where(User.email == email)) is not None:
+        fail("email_already_registered", "An account already exists for this email")
+    user = User(email=email, password_hash=hash_password(payload.password), timezone=payload.timezone)
     user.registered_on = local_today(user)
     db.add(user)
     db.flush()
+    return issue_session(db, user)
+
+
+@router.post("/auth/signin", response_model=SessionRead)
+def signin(payload: SignInCreate, db: DB):
+    user = db.scalar(select(User).where(User.email == str(payload.email)))
+    if not verify_password(payload.password, user.password_hash if user else None):
+        fail("invalid_credentials", "Email or password is incorrect", 401)
     return issue_session(db, user)
 
 

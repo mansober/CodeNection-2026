@@ -24,6 +24,8 @@ class Owned(Entity):
 
 class User(Entity, Base):
     __tablename__ = "users"
+    email: Mapped[str | None] = mapped_column(String(320), unique=True, index=True)
+    password_hash: Mapped[str | None] = mapped_column(String(512))
     timezone: Mapped[str] = mapped_column(String(64))
     registered_on: Mapped[date] = mapped_column(Date)
     plan_revision: Mapped[int] = mapped_column(Integer, default=0)
@@ -96,6 +98,15 @@ class WeeklyNote(Owned, Base):
     __table_args__ = (UniqueConstraint("user_id", "week_start"),)
     week_start: Mapped[date] = mapped_column(Date)
     text: Mapped[str] = mapped_column(String(10000))
+
+
+class PlannerStateRecord(Owned, Base):
+    """Versioned cloud copy of one user's planner state."""
+
+    __tablename__ = "planner_states"
+    __table_args__ = (UniqueConstraint("user_id"),)
+    schema_version: Mapped[int] = mapped_column(Integer, default=1)
+    data: Mapped[dict] = mapped_column(JSON)
 
 
 class Recovery(Owned, Base):

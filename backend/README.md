@@ -1,7 +1,7 @@
 # Santai backend
 
 FastAPI service for date-based student workload planning. The current backend
-supports guest identities, baselines, modules, assignments, commitments,
+supports email/password accounts, baselines, modules, assignments, commitments,
 occurrence adjustments, check-ins, recovery, timetable import, learning
 materials, flashcards, and account export/deletion.
 
@@ -32,22 +32,24 @@ Set `DATABASE_URL`, exact `CORS_ORIGINS`, storage, and proxy request/time limits
 
 ## Authentication
 
-Create a temporary account with `POST /v1/auth/guest`, retain its bearer token,
-and send `Authorization: Bearer <token>`. Refresh rotates the token; logout
-invalidates it. Guest identity is intentionally an MVP boundary: losing the token
-loses access. A permanent account method and recovery flow must be chosen before
-public launch.
+Create an account with `POST /v1/auth/signup` using `email`, `password`, and an
+IANA `timezone`. Return later with `POST /v1/auth/signin` using `email` and
+`password`. Passwords are stored only as Argon2 hashes; the API returns an opaque
+bearer token whose SHA-256 digest is stored in the database. Send that token as
+`Authorization: Bearer <token>`. Refresh rotates the current token and logout
+invalidates it. Password reset and email verification remain pre-launch work.
 
 ## Typical client flow
 
-1. Create a guest session and save its token securely.
-2. `PUT /v1/baseline` using the current `plan_revision` from `/v1/me`.
-3. Create modules and assignments, then commitments; or preview and confirm an
-   ICS timetable import.
-4. Read `/v1/planner`, `/v1/dashboard`, or `/v1/planner/distribution`.
-5. Use `/v1/planner/what-if` before saving optional work.
-6. Move, skip, lighten, restore, or request help for a single occurrence through
-   `/v1/planner/actions`.
+The current Expo frontend is local-first and uses the normalized resources:
+
+1. Sign up or sign in and save the returned session token securely.
+2. Load the baseline, modules, assignments, commitments, recent check-ins, dashboard, and recovery resources.
+3. Write changed resources with their current `plan_revision` and/or `X-Resource-Version`, as required by the endpoint.
+4. Read `/v1/planner`, `/v1/dashboard`, `/v1/planner/what-if`, and `/v1/recovery` for backend-computed views.
+5. Poll `/v1/me` every five seconds while idle; reload normalized resources when `plan_revision` changes.
+
+The versioned `/v1/planner-state` endpoint remains only for compatibility with earlier clients. The current frontend may read it once as a migration source, but active planner writes do not depend on it. Check-in diary fields and device-local file URIs stay local. Binary timetable/material upload and AI parsing remain separate work.
 
 Mutating planning calls use the user's `plan_revision`; resource edits also use
 `X-Resource-Version`. A `409` means the client must refresh before retrying.
@@ -110,7 +112,7 @@ point the test suite at development or production data.
 
 ## Public deployment checklist
 
-- Choose permanent authentication and account recovery; rate-limit auth routes.
+- Add password recovery and email verification; rate-limit auth routes at the trusted proxy.
 - Terminate TLS at a trusted proxy and configure explicit trusted hosts/origins.
 - Use managed PostgreSQL backups and object storage if running multiple replicas.
 - Run one migration job per release rather than every replica racing at startup.

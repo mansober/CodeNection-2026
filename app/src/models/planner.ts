@@ -1,9 +1,45 @@
 import { CapacityKind, CapacityValue, Commitment, DailyCheckIn, RoutineEntry, capacityMeta, routineCatalog } from "./margin";
 
-export type Module = { id: string; name: string; days: number[]; assignment?: { start: string; due: string } };
+export type Module = {
+  /** Stable UI id. Existing local plans keep this id during the backend migration. */
+  id: string;
+  name: string;
+  days: number[];
+  serverId?: string;
+  serverVersion?: number;
+  assignment?: {
+    start: string;
+    due: string;
+    serverId?: string;
+    serverVersion?: number;
+  };
+};
 export type FlashCard = { id: string; question: string; answer: string };
 export type Material = { id: string; moduleId: string; name: string; topic: string; week: string; date: string; uri: string; cards: FlashCard[] };
 export type RecoveryResult = { done: boolean; feeling?: string };
+export type PlannerState = {
+  routineEntries: Record<string, RoutineEntry>;
+  feelAnswers: Partial<Record<CapacityKind, number>>;
+  recoveryChoice?: number;
+  commitments: Commitment[];
+  modules: Module[];
+  materials: Material[];
+  checks: Record<string, DailyCheckIn>;
+  recoveryResults: Record<string, RecoveryResult>;
+  overrides: Record<string, Commitment>;
+  registeredOn?: string;
+  weeklyNote: string;
+  pendingModuleDeletes?: {
+    serverId: string;
+    serverVersion: number;
+    assignmentId?: string;
+    assignmentVersion?: number;
+  }[];
+  pendingAssignmentDeletes?: {
+    serverId: string;
+    serverVersion: number;
+  }[];
+};
 export type RecoveryOption = {
   id: string;
   title: string;

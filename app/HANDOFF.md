@@ -16,7 +16,7 @@ The core setup model is:
 
 ### First-time setup
 
-`Welcome → Select normal-week activities → Estimate weekly demand → Personal-limit questions → Recovery-room question → Baseline ready`
+`Sign up or sign in → Welcome → Select normal-week activities → Estimate weekly demand → Personal-limit questions → Recovery-room question → Baseline ready`
 
 From **Baseline ready**, the user can independently:
 
@@ -58,6 +58,7 @@ Today's recommendation can be marked complete or undone, followed by an optional
 
 | Page | Purpose and main actions |
 |---|---|
+| Sign in / Sign up | Email/password account entry. A valid backend connection is required. |
 | Welcome | Brand entry, setup roadmap, and first-time CTA. |
 | Normal-week selection | Multi-select recurring activities grouped into Study & work, Activities, and Life. |
 | Weekly estimate | Per-activity duration, weekly frequency, demand level, and live weekly total. |
@@ -67,7 +68,7 @@ Today's recommendation can be marked complete or undone, followed by an optional
 | Dashboard | Daily/weekly capacity summary, energy leaf, weekly note, flashcards, planning actions, and check-in entry. |
 | Plan | Daily or weekly commitments, assignment work, unscheduled items, date navigation, and occurrence actions. |
 | Recovery | Seven-day recovery overview, selected-day recommendation, explanation, completion, and reflection. |
-| Profile | Mascot/streak summary, plan counts, baseline details, personal-limit answers, and baseline editing. |
+| Profile | Account email/sign-out, mascot/streak summary, plan counts, baseline details, personal-limit answers, and baseline editing. |
 | Add Commitment | Category, schedule, duration, and overall-effort form used by onboarding and the main app. |
 | Commitment preview | What-if comparison followed by confirm, decline, or open Plan. |
 | Import timetable | ICS import plus manual module fallback. |
@@ -97,7 +98,12 @@ Secondary pages store their entry page and return there on Back. Hardware Back c
 
 - `MarginApp.tsx` owns the active route and canonical `PlannerState`.
 - State contains routines, limit answers, recovery choice, commitments, modules, materials, check-ins, recovery results, occurrence overrides, registration date, and weekly note.
-- Every state change is persisted under `margin-planner-v2`: browser `localStorage` on web and a JSON document file on native.
+- Every state change is persisted under an account-scoped `margin-planner-v3-<user-id>` key: browser `localStorage` on web and a JSON document file on native. A one-time migration lets the first newly created account claim pre-authentication `margin-planner-v2` data.
+- After authentication, a configured `EXPO_PUBLIC_API_URL` enables debounced normalized API persistence with bounded retry for transient errors, including during onboarding. Startup protects unsynced offline work; otherwise the backend resources are authoritative and device-private fields stay merged from local storage.
+- Dashboard, Plan, what-if comparisons, occurrence actions, streaks, and Recovery recommendations come from backend responses. The client polls `plan_revision` every five seconds and reloads when another device changes the account.
+- Modules, assignments, and commitments carry server IDs and optimistic versions. Explicit deletion tombstones prevent an older device snapshot from inferring and deleting newer backend records.
+- Users authenticate with email and password. The API stores an Argon2 password hash and issues an opaque session token; native clients retain the token in Expo SecureStore and web clients use browser storage.
+- Check-in note/cause fields and material device URIs are stripped before sync and restored only from the current device.
 - `models/margin.ts` defines baseline categories, answer selection, and shared domain types.
 - `models/planner.ts` expands routines/commitments into days, calculates capacity use, ranks recovery options, parses ICS data, and extracts text flashcards.
 - Baseline editing from Profile reuses setup forms but returns directly to Profile instead of showing first-time completion again.
@@ -113,12 +119,17 @@ Secondary pages store their entry page and return there on Back. Hardware Back c
 - `src/screens/FlashcardScreen.tsx` — materials and flashcards.
 - `src/screens/WhatIfScreens.tsx` — commitment preview flow.
 - `src/components/MarginUI.tsx` and `src/theme/tokens.ts` — shared controls and visual tokens.
+- `src/screens/AuthScreen.tsx` — sign-up/sign-in form and client-side form feedback.
+- `src/services/api.ts` — account session lifecycle, automatic token rotation, authenticated transport, account export/deletion, legacy snapshot transport, and request errors.
+- `src/services/planningApi.ts` — normalized resource mapping, pagination, idempotent/coalesced persistence, optimistic concurrency, backend view mapping, what-if, and occurrence actions.
+- `src/services/cloudState.ts` — privacy projection and one-time legacy snapshot reconciliation.
 
 ## Current boundaries
 
-- The FastAPI backend is present in `../backend`, but the frontend is not connected to it yet. The running app remains device-local with no accounts or cloud sync.
-- Timetable import supports ICS locally. Image timetable OCR is not connected.
-- Text-based materials can generate cards; automatic extraction from PDF/PowerPoint is not connected in the frontend.
+- All active non-AI planner features use normalized backend resources. `/v1/planner-state` remains only as a compatibility read for migrating data saved by earlier builds.
+- Email/password authentication and sign-out are implemented. Password reset, email verification, and third-party identity providers are not yet implemented.
+- Timetable import supports ICS locally. Backend upload/import and image timetable OCR are intentionally deferred for the AI integration.
+- Text-based materials can generate cards locally; backend material upload and automatic extraction from PDF/PowerPoint are intentionally deferred for the AI integration.
 - Assignment check-ins store intended progress percentage, not completion or elapsed study time.
 - Unfinished onboarding values persist, but the exact in-progress screen does not; reopening before completion returns to Welcome with saved values still populated.
 
