@@ -68,10 +68,6 @@ docker compose up --build
 The API is available at `http://localhost:8000`, with OpenAPI documentation at `http://localhost:8000/docs`.
 # Santai — README diagrams
 
-**These are Mermaid diagrams.** GitHub renders them natively inside `README.md` — no image files, no
-broken links, and they stay version-controlled. Paste each block straight into the README.
-
-If any block fails to render on GitHub, tell me and I will convert that one to an SVG image.
 
 ---
 
