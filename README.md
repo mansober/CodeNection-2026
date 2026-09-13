@@ -85,27 +85,27 @@ Two notes on how we read the brief. It never mentions grades, but for our users 
 
 ### 2.2 Ideation Boards
 
-![Feature list from the group chat](ideation-feature-list.jpg)
+![Feature list from the group chat](images/ideation-feature-list.jpg)
 
 *3:07am, our first full scope in the group chat. Ten numbered pages, most of which shipped. Item 9, the workload distribution pie chart, is the one we later cut.*
 
-![Flashcard idea](ideation-flashcard-idea.jpg)
+![Flashcard idea](images/ideation-flashcard-idea.jpg)
 
 *6 Sep, the flashcard idea being born. "sbb aku risau benda ni sama mcm org lain" means "because I'm worried this is the same as everyone else's". The next message answers it: "so dgn features ni kita lain dari yg lain".*
 
-![MVP cut](ideation-mvp-cut.png)
+![MVP cut](images/ideation-mvp-cut.png)
 
 *Cutting scope to an MVP. Calendar import, AI load estimation from free text and automatic rebalancing all moved to nice-to-have. Two of the three came back later once we had time.*
 
-![Mentor notes](ideation-mentor-notes.jpg)
+![Mentor notes](images/ideation-mentor-notes.jpg)
 
 *Our notes from the mentor session, written up in the team chat the same night. Every line in 2.3 traces back to this.*
 
-![First design pass](ideation-first-design.jpg)
+![First design pass](images/ideation-first-design.jpg)
 
 *Our first design, before the build. Four tabs including a Load tab, and 5D vocabulary on the buttons. Both were gone by 12 Sep.*
 
-![Mascot sketch](ideation-mascot-sketch.jpg)
+![Mascot sketch](images/ideation-mascot-sketch.jpg)
 
 *An early mascot sketch. We wanted a character a student opens daily, not a workload report. The final sprout came out of this pass.*
 
@@ -190,28 +190,28 @@ The moat comment is why this project has a shape. He told us to find one on the 
 
 > **[TEAM NOTE, delete before submitting]** Run `npm run export:web` in `/app`, deploy to Netlify, then check it opens in incognito.
 
-![Baseline ready](screen-baseline-ready.png)
+![Baseline ready](images/screen-baseline-ready.png)
 **Baseline ready.** Setup ends here: 16h/week routine, personal limits set, 5h recovery room. Importing a timetable or adding a commitment is offered, not forced.
 
-![Dashboard](screen-dashboard.png)
+![Dashboard](images/screen-dashboard.png)
 **Dashboard.** 83/100 energy left today, above the week's load split into four capacity bars. Bottom nav is Dashboard, Plan, Add, Recovery, Profile.
 
-![Add commitment estimate](screen-add-estimate.png)
+![Add commitment estimate](images/screen-add-estimate.png)
 **Adding a commitment.** Set time needed and overall effort, then Santai estimates the mental, physical and social cost before you confirm.
 
-![Plan](screen-plan.png)
+![Plan](images/screen-plan.png)
 **Plan.** Week view with commitments on their day and their current status. Every item can be kept, moved, handed over, skipped or made lighter.
 
-![Recovery suggested](screen-recovery-suggested.png)
+![Recovery suggested](images/screen-recovery-suggested.png)
 **Recovery, triggered.** Sunday's load crosses the line, so a matched suggestion appears. Here it is alone time, because social load is the tight one.
 
-![Recovery completed](screen-recovery-completed.png)
+![Recovery completed](images/screen-recovery-completed.png)
 **Recovery, closed out.** Mark it done, then say how it felt: Better, About the same, or Still drained.
 
-![Flashcards](screen-flashcard.png)
+![Flashcards](images/screen-flashcard.png)
 **Flashcards.** Upload materials against a module, then pull cards from what you uploaded. Grouped by module, day or topic.
 
-![Profile](screen-profile.png)
+![Profile](images/screen-profile.png)
 **Profile.** Mascot, streak, plan count and your baseline answers, editable without redoing setup.
 
 ## 4. What Makes It Different
