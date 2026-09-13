@@ -210,7 +210,7 @@ The moat comment is why this project has a shape. He told us to find one on the 
 
 ## 3. Design & Prototype
 
-**UI Prototype:** [public link]
+**UI Prototype:** https://santai.rxyru.my/
 
 
 <img src="images/screen-baseline-ready.png" width="250">
@@ -323,13 +323,11 @@ flowchart LR
 ### Build plan & scope
 
 What we build next:
+1. **Flashcard pipeline.** Upload, extraction, card generation, stored against the right module and week, with a size cap and a visible failure state.
+2. **Close the check-in loop** so today's answers move today's numbers.
+3. **Recovery feedback.** Store whether a suggestion helped and rank future ones by it.
+4. **More to come on Building Phase**
 
-1. **Connect frontend to backend.** Everything waits on this. FastAPI exists, but the app still persists on-device through `localStorage` and a JSON file. Connecting them brings accounts, sync and the AI calls.
-2. **Flashcard pipeline.** Upload, extraction, card generation, stored against the right module and week, with a size cap and a visible failure state.
-3. **Harden the timetable parser** for the formats APU actually issues, with a working correction step.
-4. **Close the check-in loop** so today's answers move today's numbers.
-5. **Recovery feedback.** Store whether a suggestion helped and rank future ones by it.
-6. **Authentication.** There is no login yet.
 
 Not in this phase: Teams integration, community matching, push notifications, iOS release.
 
