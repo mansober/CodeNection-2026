@@ -5,7 +5,7 @@ This directory is the complete Santai frontend. It uses Expo SDK 57, React Nativ
 ## Start here
 
 ```powershell
-cd "C:\Users\User\OneDrive\Documents\DEGREE\Projects\CodeNection-2026\app"
+cd app
 npm install
 npx expo start
 ```
@@ -19,7 +19,7 @@ Expo Go is only the fast development workflow. Santai is also configured as its 
 Keep the repository as an Expo managed project. Generate the native Android project only when a local standalone build is needed:
 
 ```powershell
-cd "C:\Users\User\OneDrive\Documents\DEGREE\Projects\CodeNection-2026\app"
+cd app
 npm ci
 npx expo prebuild --platform android
 cd android
@@ -52,9 +52,8 @@ npm run export:web
 - Schedule and Assignments have dedicated pages, while Recovery replaces the old Load destination and ranks only options that do not worsen the user's most constrained capacity.
 - timetable selection uses Expo DocumentPicker so the same import entry point works on Android, iOS, and web.
 
-## Current prototype
+## Current implementation
 
-See [PROTOTYPE.md](PROTOTYPE.md) for the full feature checklist, theme source, estimation rules and deferred integrations. App version 1.2.0 adds the exact supplied Santai mascot, compact capacity signals, guarded recovery recommendations, dedicated Schedule, Assignments and Profile pages, a single effort estimate, module-aware material uploads and the central quick-add sheet. It retains package `com.codenection.margin` for in-place updates.
+See [HANDOFF.md](HANDOFF.md) for the current user flows, active page inventory, state ownership, code map, and known boundaries.
 
 Run `node scripts/test-planner.cjs` for planner model regression checks.
-The 1.2.0 interface keeps the energy-responsive leaf, adds animated welcome leaves, uses a compact forest-floor navigation bar and makes Plan cards easier to scan with semantic colour accents. See PROTOTYPE.md for the current behaviour.

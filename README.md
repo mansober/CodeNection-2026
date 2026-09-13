@@ -15,7 +15,7 @@ app/
     components/           # Accessible shared UI and SVG icons
     features/margin/      # App-level state and navigation flow
     models/               # Capacity and commitment models
-    screens/              # Onboarding, planning, rebalance, recovery
+    screens/              # Onboarding, planning, recovery, and secondary flows
     theme/                # Typography, colour, and spacing tokens
 backend/                  # FastAPI service and database layer
 compose.yaml              # Local backend and PostgreSQL services
@@ -26,7 +26,7 @@ There is no second native Android frontend. Run every client platform from `app/
 ## Run the app
 
 ```powershell
-cd "C:\Users\User\OneDrive\Documents\DEGREE\Projects\CodeNection-2026\app"
+cd app
 npm install
 npx expo start
 ```
@@ -53,7 +53,7 @@ For Android, start a virtual device in Android Studio’s Device Manager first. 
 
 The current functional prototype includes baseline setup, ICS module import and assignment dates, commitment calendars/sliders, a daily/weekly dashboard, energy and check-in streaks, daily assignment/training updates, per-item plan actions, a real what-if preview, load distribution, recovery feedback and a flashcard library.
 
-See [the full prototype handoff](app/PROTOTYPE.md) for the implemented checklist, theme adaptation and honest limits. New planner flows save locally; automatic image/PDF interpretation and AI weekly-note extraction are not connected.
+See [the current app handoff](app/HANDOFF.md) for user flows, active pages, state ownership, and implementation boundaries. Planner data currently saves locally; the frontend has not yet been connected to the backend.
 
 If Metro reports an `EINVAL ... readlink` error from a OneDrive-synced `node_modules` directory, clone the repository to a normal local folder outside OneDrive and run `npm install` there. This is a Windows/OneDrive filesystem issue rather than an app-code issue.
 
