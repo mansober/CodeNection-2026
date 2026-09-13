@@ -214,41 +214,49 @@ The moat comment is why this project has a shape. He told us to find one on the 
 
 
 <img src="images/screen-baseline-ready.png" width="250">
+
 **Baseline ready.** Setup ends here: 16h/week routine, personal limits set, 5h recovery room. Importing a timetable or adding a commitment is offered, not forced.
 
 
 
 <img src="images/screen-dashboard.png" width="250">
+
 **Dashboard.** 83/100 energy left today, above the week's load split into four capacity bars. Bottom nav is Dashboard, Plan, Add, Recovery, Profile.
 
 
 
 <img src="images/screen-add-estimate.png" width="250">
+
 **Adding a commitment.** Set time needed and overall effort, then Santai estimates the mental, physical and social cost before you confirm.
 
 
 
 <img src="images/screen-plan.png" width="250">
+
 **Plan.** Week view with commitments on their day and their current status. Every item can be kept, moved, handed over, skipped or made lighter.
 
 
 
 <img src="images/screen-recovery-suggested.png" width="250">
+
 **Recovery, triggered.** Sunday's load crosses the line, so a matched suggestion appears. Here it is alone time, because social load is the tight one.
 
 
 
 <img src="images/screen-recovery-completed.png" width="250">
+
 **Recovery, closed out.** Mark it done, then say how it felt: Better, About the same, or Still drained.
 
 
 
 <img src="images/screen-flashcard.png" width="250">
+
 **Flashcards.** Upload materials against a module, then pull cards from what you uploaded. Grouped by module, day or topic.
 
 
 
 <img src="images/screen-profile.png" width="250">
+
 **Profile.** Mascot, streak, plan count and your baseline answers, editable without redoing setup.
 
 
