@@ -107,6 +107,7 @@ ENV/
 *.dump
 *.sql.gz
 postgres_data/
+backend/data/
 
 # Docker and local tooling
 .docker/
