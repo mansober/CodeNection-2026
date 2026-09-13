@@ -8,8 +8,8 @@ import { readPickedText } from "./TimetableScreen";
 import { screenStyles as s } from "./screenStyles";
 import { colors } from "@/theme/tokens";
 
-export function FlashcardScreen({ modules, materials, onSave, onBack }: { modules: Module[]; materials: Material[]; onSave: (materials: Material[]) => void; onBack: () => void }) {
-  const [moduleId, setModuleId] = useState(modules[0]?.id ?? "");
+export function FlashcardScreen({ modules, materials, initialModuleId, onSave, onBack }: { modules: Module[]; materials: Material[]; initialModuleId?: string; onSave: (materials: Material[]) => void; onBack: () => void }) {
+  const [moduleId, setModuleId] = useState(initialModuleId && modules.some(module => module.id === initialModuleId) ? initialModuleId : modules[0]?.id ?? "");
   const [groupBy, setGroupBy] = useState("Module");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);

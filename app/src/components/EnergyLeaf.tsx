@@ -197,16 +197,22 @@ export function LeafIllustration({ energy, height = 230 }: { energy: number; hei
 export function EnergyLeaf({ energy }: { energy: number }) {
   const value = Math.max(0, Math.min(100, Math.round(energy)));
   const state = value < 30 ? "A little rest would help." : value < 60 ? "Keep some room to recover." : "Room for the day ahead.";
-  return <View style={{ paddingHorizontal: 24, paddingTop: 4, paddingBottom: 20 }}>
-    <View style={{ minHeight: 216, justifyContent: "center" }}>
-      <View style={{ width: "56%", gap: 10, zIndex: 1 }} accessible accessibilityLabel={`Today's energy, ${value} out of 100 left. ${state}`}>
-        <Text style={{ fontFamily: fonts.bold, fontSize: 14, color: colors.mint }}>TODAY’S ENERGY</Text>
-        <Text style={{ fontFamily: fonts.number, fontSize: 48, color: colors.white }}>{value}<Text style={{ fontFamily: fonts.regular, fontSize: 17 }}> / 100 left</Text></Text>
-        <Text style={{ fontFamily: fonts.regular, fontSize: 16, lineHeight: 23, color: colors.white }}>{state}</Text>
+  return <View
+    accessible
+    accessibilityLabel={`Today's energy, ${value} out of 100 left. ${state}`}
+    style={{ height: 132, flexDirection: "row", alignItems: "flex-start" }}
+  >
+    <View style={{ flex: 1, zIndex: 1 }}>
+      <View style={{ flexDirection: "row", alignItems: "baseline" }}>
+        <Text style={{ fontFamily: fonts.number, fontSize: 46, lineHeight: 52, color: colors.white }}>{value}</Text>
+        <Text style={{ fontFamily: fonts.regular, fontSize: 17, lineHeight: 24, color: colors.mint }}> / 100</Text>
       </View>
-      <View style={{ position: "absolute", right: -18, top: -14, width: "52%" }}><LeafIllustration energy={value} height={248} /></View>
+      <Text style={{ fontFamily: fonts.medium, fontSize: 14, lineHeight: 19, color: colors.mint }}>energy left</Text>
+      <Text style={{ fontFamily: fonts.regular, fontSize: 16, lineHeight: 22, color: colors.white, marginTop: 10 }}>{state}</Text>
     </View>
-    <Text style={{ fontFamily: fonts.regular, fontSize: 14, lineHeight: 21, color: colors.mint }}>Your leaf droops as energy runs low.</Text>
+    <View pointerEvents="none" style={{ position: "absolute", right: -8, top: -16, width: "46%", height: 148 }}>
+      <LeafIllustration energy={value} height={148} />
+    </View>
   </View>;
 }
 

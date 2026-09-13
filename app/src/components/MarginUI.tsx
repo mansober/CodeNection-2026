@@ -46,13 +46,13 @@ export function PageShell({ children, bottomBar, plain = false }: PropsWithChild
   );
 }
 
-export function ScrollPage({ children, bottomBar, contentStyle, plain }: PropsWithChildren<{ bottomBar?: ReactNode; contentStyle?: StyleProp<ViewStyle>; plain?: boolean }>) {
+export function ScrollPage({ children, bottomBar, contentStyle, plain, suppressPetEndPadding = false }: PropsWithChildren<{ bottomBar?: ReactNode; contentStyle?: StyleProp<ViewStyle>; plain?: boolean; suppressPetEndPadding?: boolean }>) {
   const pet = useContext(StreakPetContext);
   return (
     <PageShell bottomBar={bottomBar} plain={plain}>
       <ScrollView
         style={styles.flex}
-        contentContainerStyle={[styles.scrollContent, contentStyle, bottomBar && pet !== undefined && !pet.hidden ? { paddingBottom: 120 } : undefined]}
+        contentContainerStyle={[styles.scrollContent, contentStyle, bottomBar && pet !== undefined && !pet.hidden && !suppressPetEndPadding ? { paddingBottom: 120 } : undefined]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
@@ -62,7 +62,7 @@ export function ScrollPage({ children, bottomBar, contentStyle, plain }: PropsWi
   );
 }
 
-export function PageHeader({ eyebrow, title, body, onBack }: { eyebrow: string; title: string; body?: string; onBack?: () => void }) {
+export function PageHeader({ eyebrow, title, body, onBack, hideMark = false }: { eyebrow: string; title: string; body?: string; onBack?: () => void; hideMark?: boolean }) {
   return (
     <View style={styles.header}>
       <View style={styles.headerTopRow}>
@@ -76,9 +76,9 @@ export function PageHeader({ eyebrow, title, body, onBack }: { eyebrow: string; 
           >
             <Text style={styles.backText}>‹ Back</Text>
           </Pressable>
-        ) : (
+        ) : !hideMark ? (
           <MarginMark size={20} />
-        )}
+        ) : null}
         <Text style={styles.eyebrow}>{eyebrow.toUpperCase()}</Text>
       </View>
       <Text accessibilityRole="header" style={styles.pageTitle}>{title}</Text>
@@ -90,16 +90,18 @@ export function PageHeader({ eyebrow, title, body, onBack }: { eyebrow: string; 
 type ButtonProps = {
   text: string;
   onPress: () => void;
+  accessibilityLabel?: string;
   variant?: "primary" | "secondary" | "quiet" | "warning";
   disabled?: boolean;
   icon?: IconName;
   style?: StyleProp<ViewStyle>;
 };
 
-export function AppButton({ text, onPress, variant = "primary", disabled = false, icon, style }: ButtonProps) {
+export function AppButton({ text, onPress, accessibilityLabel, variant = "primary", disabled = false, icon, style }: ButtonProps) {
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
       accessibilityState={{ disabled }}
       aria-disabled={disabled}
       disabled={disabled}
@@ -235,11 +237,11 @@ export function CompactStepper({ label, value, onDecrease, onIncrease }: { label
     <View style={styles.stepperRow}>
       <View style={styles.stepperText}>
         <Text style={styles.stepperLabel}>{label}</Text>
-        <Text style={styles.stepperValue}>{value}</Text>
+        <Text accessibilityLiveRegion="polite" style={styles.stepperValue}>{value}</Text>
       </View>
       <View style={styles.stepperControls}>
-        <Pressable accessibilityRole="button" accessibilityLabel={`Decrease ${label}`} onPress={onDecrease} style={styles.stepperButton}><Text style={styles.stepperSymbol}>−</Text></Pressable>
-        <Pressable accessibilityRole="button" accessibilityLabel={`Increase ${label}`} onPress={onIncrease} style={styles.stepperButton}><Text style={styles.stepperSymbol}>+</Text></Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel={`Decrease ${label}. Current value ${value}`} onPress={onDecrease} style={styles.stepperButton}><Text style={styles.stepperSymbol}>−</Text></Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel={`Increase ${label}. Current value ${value}`} onPress={onIncrease} style={styles.stepperButton}><Text style={styles.stepperSymbol}>+</Text></Pressable>
       </View>
     </View>
   );
@@ -248,7 +250,7 @@ export function CompactStepper({ label, value, onDecrease, onIncrease }: { label
 const tabs: { key: MainTab; label: string; icon: IconName }[] = [
   { key: "today", label: "Dashboard", icon: "today" },
   { key: "plan", label: "Plan", icon: "plan" },
-  { key: "recovery", label: "Recover", icon: "recovery" },
+  { key: "recovery", label: "Recovery", icon: "recovery" },
   { key: "profile", label: "Profile", icon: "person" },
 ];
 
@@ -293,7 +295,7 @@ export function BottomNav({ selected, onSelect, onQuickAdd }: { selected: MainTa
 
 export function ProgressBar({ current, total, color = colors.forest }: { current: number; total: number; color?: string }) {
   return (
-    <View style={styles.progressTrack} accessibilityLabel={`Step ${current} of ${total}`}>
+    <View accessible accessibilityRole="progressbar" accessibilityLabel={`Step ${current} of ${total}`} accessibilityValue={{ min: 1, max: total, now: current, text: `Step ${current} of ${total}` }} style={styles.progressTrack}>
       <View style={[styles.progressFill, { width: `${Math.round((current / total) * 100)}%`, backgroundColor: color }]} />
     </View>
   );

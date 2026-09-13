@@ -20,6 +20,23 @@ export const weekStart = (value: string) => shiftDate(value, -((fromKey(value).g
 export const prettyDate = (value: string) => fromKey(value).toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" });
 export const planActions = ["Keep as planned", "Move to another day", "Ask someone to help", "Skip this time", "Make it lighter"];
 
+export const normalizeModuleName = (value: string) => value.normalize("NFKC").trim().toLocaleLowerCase().replace(/[^\p{L}\p{N}]+/gu, "");
+
+export function mergeImportedModules(current: Module[], imported: Module[]) {
+  const next = [...current];
+  imported.forEach(module => {
+    const match = next.findIndex(existing => normalizeModuleName(existing.name) === normalizeModuleName(module.name));
+    if (match < 0) {
+      next.push({ ...module, id: `${module.id}-${Date.now()}-${next.length}` });
+      return;
+    }
+    // Keep the existing id so assignments and learning materials remain linked,
+    // while the timetable becomes authoritative for the display name and class days.
+    next[match] = { ...next[match], name: module.name, days: module.days };
+  });
+  return next;
+}
+
 export function parseTimetable(text: string): Module[] {
   const unfolded = text.replace(/\r?\n[ \t]/g, "");
   const modules: Module[] = [];
@@ -30,7 +47,7 @@ export function parseTimetable(text: string): Module[] {
     const byday = block.match(/BYDAY=([A-Z,0-9-]+)/)?.[1];
     const codes = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"];
     const days = byday ? byday.split(",").map(v => codes.indexOf(v.slice(-2))).filter(v => v >= 0) : start ? [fromKey(`${start[1]}-${start[2]}-${start[3]}`).getDay()] : [];
-    const existing = modules.find(m => m.name.toLowerCase() === name.toLowerCase());
+    const existing = modules.find(m => normalizeModuleName(m.name) === normalizeModuleName(name));
     if (existing) existing.days = [...new Set([...existing.days, ...days])];
     else modules.push({ id: `module-${modules.length}-${name.toLowerCase().replace(/\W/g, "")}`, name, days });
   }

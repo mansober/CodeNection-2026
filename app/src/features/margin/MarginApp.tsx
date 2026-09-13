@@ -7,8 +7,8 @@ import { CurrentCheckIn } from "@/screens/CurrentCheckIn";
 import { FlashcardScreen } from "@/screens/FlashcardScreen";
 import { AssignmentsScreen, ProfileScreen, ScheduleScreen } from "@/screens/SecondaryScreens";
 import { InlineNotice, PageHeader, ScrollPage } from "@/components/MarginUI";
-import { AppScreen, CapacityKind, Commitment, DailyCheckIn, MainTab, QuickAddAction, RoutineEntry } from "@/models/margin";
-import { Material, Module, RecoveryResult, dateKey, fromKey, loadFor, loadPercent, prettyDate, routinePlan, scheduledCommitments, shiftDate, weekStart } from "@/models/planner";
+import { AppScreen, CapacityKind, Commitment, DailyCheckIn, MainTab, QuickAddAction, RoutineEntry, weeklyHours } from "@/models/margin";
+import { Material, Module, RecoveryResult, dateKey, loadFor, loadPercent, prettyDate, routinePlan, scheduledCommitments, shiftDate, weekStart } from "@/models/planner";
 import { StreakPetContext } from "@/components/StreakPet";
 import { readSavedPlan, writeSavedPlan } from "@/models/storage";
 import { colors } from "@/theme/tokens";
@@ -38,7 +38,8 @@ export function MarginApp() {
   const [loaded, setLoaded] = useState(false);
   const [storageError, setStorageError] = useState("");
   const [screen, setScreen] = useState<AppScreen>("welcome");
-  const [setupActive, setSetupActive] = useState(true);
+  const [editingBaseline, setEditingBaseline] = useState(false);
+  const [baselineBack, setBaselineBack] = useState<AppScreen>("welcome");
   const [draft, setDraft] = useState<Commitment>();
   const [feelIndex, setFeelIndex] = useState(0);
   const [editing, setEditing] = useState<Commitment>();
@@ -47,7 +48,13 @@ export function MarginApp() {
   const [today, setToday] = useState(dateKey());
   const [selectedDate, setSelectedDate] = useState(dateKey());
   const [checkInVisible, setCheckInVisible] = useState(false);
+  const [checkInSaved, setCheckInSaved] = useState(false);
   const [secondaryBack, setSecondaryBack] = useState<AppScreen>("today");
+  const [scheduleBack, setScheduleBack] = useState<AppScreen>("today");
+  const [flashcardBack, setFlashcardBack] = useState<AppScreen>("today");
+  const [assignmentBack, setAssignmentBack] = useState<AppScreen>("today");
+  const [moduleFocusId, setModuleFocusId] = useState<string>();
+  const [materialFocusId, setMaterialFocusId] = useState<string>();
   const [importReturn, setImportReturn] = useState<AppScreen>("schedule");
   const [addOnboardingBack, setAddOnboardingBack] = useState<AppScreen>("setup-choice");
   const [noteReturn, setNoteReturn] = useState<AppScreen>("today");
@@ -59,8 +66,9 @@ export function MarginApp() {
       if (!active) return;
       if (raw) {
         const saved = JSON.parse(raw) as Partial<PlannerState>;
-        setState({ ...initialState, ...saved });
-        // Prototype: cold launches open Welcome without deleting the saved plan.
+        const restored = { ...initialState, ...saved };
+        setState(restored);
+        if (restored.registeredOn) setScreen("today");
       }
       setLoaded(true);
     }).catch(() => { if (active) { setStorageError("Your saved plan could not be read. Close and reopen Santai to retry; the saved file has not been overwritten."); } });
@@ -76,11 +84,16 @@ export function MarginApp() {
     const sub = AppState.addEventListener("change", status => { if (status === "active") refresh(); });
     return () => { clearInterval(timer); sub.remove(); };
   }, []);
+  useEffect(() => {
+    if (!checkInSaved) return;
+    const timer = setTimeout(() => setCheckInSaved(false), 3200);
+    return () => clearTimeout(timer);
+  }, [checkInSaved]);
   const checkInEligible = !!state.registeredOn && today > state.registeredOn;
   const currentCheck = state.checks[today];
   useEffect(() => {
     if (screen !== "preparing") return;
-    const timer = setTimeout(() => { setState(current => ({ ...current, registeredOn: current.registeredOn ?? dateKey() })); setSetupActive(false); setScreen("today"); }, 1000);
+    const timer = setTimeout(() => { setState(current => ({ ...current, registeredOn: current.registeredOn ?? dateKey() })); setScreen("today"); }, 1000);
     return () => clearTimeout(timer);
   }, [screen]);
 
@@ -89,9 +102,9 @@ export function MarginApp() {
     if (screen === "welcome" || screen === "today") return false;
     if (screen === "profile" || screen === "recovery" || screen === "plan") { setScreen("today"); return true; }
     if (screen === "feel-questions" && feelIndex > 0) { setFeelIndex(i => i - 1); return true; }
-    const target: Partial<Record<AppScreen, AppScreen>> = { "routine-checklist": "welcome", "routine-hours": "routine-checklist", "feel-questions": "routine-hours", "setup-choice": "feel-questions", "import-timetable": setupActive ? "setup-choice" : importReturn, "add-onboarding": addOnboardingBack, "anything-else": "setup-choice", simulator: "test-commitment", add: secondaryBack, flashcards: secondaryBack, schedule: secondaryBack, assignments: secondaryBack, "weekly-note": noteReturn };
+    const target: Partial<Record<AppScreen, AppScreen>> = { "routine-checklist": baselineBack, "routine-hours": "routine-checklist", "feel-questions": "routine-hours", "setup-choice": "feel-questions", "import-timetable": importReturn, "add-onboarding": addOnboardingBack, "anything-else": "setup-choice", simulator: "test-commitment", add: secondaryBack, flashcards: flashcardBack, schedule: scheduleBack, assignments: assignmentBack, "weekly-note": noteReturn };
     setScreen(target[screen] ?? "today"); return true;
-  }, [screen, feelIndex, checkInVisible, setupActive, importReturn, addOnboardingBack, secondaryBack, noteReturn]);
+  }, [screen, feelIndex, checkInVisible, baselineBack, importReturn, addOnboardingBack, secondaryBack, scheduleBack, flashcardBack, assignmentBack, noteReturn]);
   useEffect(() => { const sub = BackHandler.addEventListener("hardwareBackPress", goBack); return () => sub.remove(); }, [goBack]);
 
   const makeDay = (date: string) => {
@@ -115,6 +128,10 @@ export function MarginApp() {
   const capacities = currentDay.capacities.map(v => ({ ...v, used: Math.round(dashboardDays.reduce((sum, day) => sum + day.capacities.find(c => c.kind === v.kind)!.used, 0) / dashboardDays.length) }));
   const overall = loadPercent(capacities);
   const energy = Math.max(0, Math.min(100, Math.round(100 - currentDay.capacities.reduce((sum, v) => sum + Math.min(100, v.used / v.limit * 100), 0) / 4) + (state.recoveryResults[today]?.done ? 10 : 0)));
+  const flashcardGroups = state.modules.map(module => ({
+    name: module.name,
+    count: state.materials.filter(material => material.moduleId === module.id).reduce((total, material) => total + material.cards.length, 0),
+  })).filter(group => group.count > 0);
   const streak = useMemo(() => {
     let count = 0; let cursor = state.checks[today] ? today : shiftDate(today, -1);
     while (state.checks[cursor]) { count++; cursor = shiftDate(cursor, -1); }
@@ -122,8 +139,7 @@ export function MarginApp() {
   }, [state.checks, today]);
   const selectTab = (tab: MainTab) => { if (tab === "plan") setFilter("All"); navigate(mainTabs[tab]); };
   const showPlan = (next: PlanFilter) => { setFilter(next); setScreen("plan"); };
-  const openSecondary = (next: "schedule" | "assignments") => { setSecondaryBack(screen === "plan" ? "plan" : "today"); navigate(next); };
-  const menu = { period, onPeriod: setPeriod, onSchedule: () => openSecondary("schedule"), onAssignments: () => openSecondary("assignments") };
+  const menu = { period, onPeriod: setPeriod };
   const saveCommitment = (item: Commitment) => setState(current => item.routineId ? { ...current, overrides: { ...current.overrides, [item.id]: item } } : { ...current, overrides: Object.fromEntries(Object.entries(current.overrides).filter(([id, value]) => id !== item.id && value.sourceId !== item.id)), commitments: [...current.commitments.filter(v => v.id !== item.id), item] });
   const onAction = (item: Commitment, action: string, date: string, duration: number, helper: string) => {
     setState(current => {
@@ -148,38 +164,39 @@ export function MarginApp() {
     });
   };
   const quickAdd = (action: QuickAddAction) => {
-    setSecondaryBack(screen === "profile" || screen === "recovery" || screen === "plan" ? screen : "today");
-    if (action === "commitment") { setEditing(undefined); navigate("add"); }
-    else if (action === "assignment") navigate("assignments");
-    else if (action === "timetable") { setSetupActive(false); setImportReturn("schedule"); navigate("import-timetable"); }
-    else if (action === "materials") navigate("flashcards");
+    const origin = screen === "profile" || screen === "recovery" || screen === "plan" ? screen : "today";
+    if (action === "commitment") { setSecondaryBack(origin); setEditing(undefined); navigate("add"); }
+    else if (action === "assignment") { setAssignmentBack(origin); setModuleFocusId(undefined); navigate("assignments"); }
+    else if (action === "timetable") { setScheduleBack(origin); setImportReturn("schedule"); navigate("import-timetable"); }
+    else if (action === "materials") { setFlashcardBack(origin); setMaterialFocusId(undefined); navigate("flashcards"); }
     else { setNoteReturn(screen); navigate("weekly-note"); }
   };
   const selectedIds = Object.keys(state.routineEntries);
+  const baselineHours = selectedIds.reduce((total, id) => total + weeklyHours(state.routineEntries[id]), 0);
   const updateEntry = (id: string, entry: RoutineEntry) => setState(current => ({ ...current, routineEntries: { ...current.routineEntries, [id]: entry } }));
 
   if (!loaded) return <ScrollPage><PageHeader eyebrow="Santai" title={storageError ? "Your plan needs attention" : "Opening your plan"} /><View style={s.content}>{storageError ? <Text style={s.body}>{storageError}</Text> : <ActivityIndicator color={colors.forest} />}</View></ScrollPage>;
   let page;
-  if (screen === "welcome") page = <WelcomeScreen onStart={() => { setSetupActive(true); navigate("routine-checklist"); }} />;
+  if (screen === "welcome") page = <WelcomeScreen onStart={() => { setEditingBaseline(false); setBaselineBack("welcome"); navigate("routine-checklist"); }} />;
   else if (screen === "routine-checklist") page = <RoutineChecklistScreen selectedIds={selectedIds} onToggle={id => setState(current => { const entries = { ...current.routineEntries }; if (entries[id]) delete entries[id]; else entries[id] = { durationHours: 1, timesPerWeek: 1, condition: "Typical" }; return { ...current, routineEntries: entries }; })} onBack={goBack} onContinue={() => navigate("routine-hours")} />;
   else if (screen === "routine-hours") page = <RoutineHoursScreen selectedIds={selectedIds} entries={state.routineEntries} onEntryChange={updateEntry} onBack={goBack} onContinue={() => { setFeelIndex(0); navigate("feel-questions"); }} />;
-  else if (screen === "feel-questions") page = <FeelQuestionsScreen selectedIds={selectedIds} entries={state.routineEntries} answers={state.feelAnswers} recoveryChoice={state.recoveryChoice} index={feelIndex} onAnswer={(kind, value) => patch({ feelAnswers: { ...state.feelAnswers, [kind]: value } })} onRecovery={value => patch({ recoveryChoice: value })} onIndexChange={setFeelIndex} onBack={goBack} onContinue={() => navigate("setup-choice")} />;
-  else if (screen === "setup-choice") page = <SetupChoiceScreen onBack={goBack} onImport={() => { setImportReturn("setup-choice"); navigate("import-timetable"); }} onManual={() => { setAddOnboardingBack("setup-choice"); navigate("add-onboarding"); }} onSkip={() => navigate("anything-else")} />;
-  else if (screen === "import-timetable") page = <ImportTimetableScreen initial={state.modules} materials={state.materials} onMaterials={materials => patch({ materials })} submitText={setupActive ? "Save & add a commitment" : importReturn === "assignments" ? "Save modules & assignments" : "Save timetable"} onBack={goBack} onContinue={modules => { saveModules(modules); if (setupActive) { setAddOnboardingBack("import-timetable"); navigate("add-onboarding"); } else navigate(importReturn); }} />;
-  else if (screen === "add-onboarding") page = <CommitmentForm eyebrow="Specific commitment" title="Add Commitment" body="Add a deadline, competition or another plan." submitText="Add & continue" onBack={goBack} returnAction={addOnboardingBack === "import-timetable" ? { text: "Return to timetable", onPress: () => navigate("import-timetable") } : undefined} onSubmit={item => { saveCommitment(item); navigate("anything-else"); }} onAddAnother={saveCommitment} secondaryAction={{ text: "Continue without another commitment", onPress: () => navigate("anything-else") }} />;
+  else if (screen === "feel-questions") page = <FeelQuestionsScreen selectedIds={selectedIds} entries={state.routineEntries} answers={state.feelAnswers} recoveryChoice={state.recoveryChoice} index={feelIndex} onAnswer={(kind, value) => patch({ feelAnswers: { ...state.feelAnswers, [kind]: value } })} onRecovery={value => patch({ recoveryChoice: value })} onIndexChange={setFeelIndex} onBack={goBack} onContinue={() => { if (editingBaseline) { setEditingBaseline(false); navigate("profile"); } else navigate("setup-choice"); }} />;
+  else if (screen === "setup-choice") page = <SetupChoiceScreen baselineHours={baselineHours} activityCount={selectedIds.length} recoveryChoice={state.recoveryChoice} onBack={goBack} onImport={() => { setImportReturn("setup-choice"); navigate("import-timetable"); }} onManual={() => { setAddOnboardingBack("setup-choice"); navigate("add-onboarding"); }} onSkip={() => { setState(current => ({ ...current, registeredOn: current.registeredOn ?? dateKey() })); navigate("today"); }} />;
+  else if (screen === "import-timetable") page = <ImportTimetableScreen initial={state.modules} eyebrow={importReturn === "setup-choice" ? "Setup · Upcoming · Optional" : undefined} submitText={importReturn === "setup-choice" ? "Save & return" : "Save timetable"} onBack={goBack} onContinue={modules => { saveModules(modules); navigate(importReturn); }} />;
+  else if (screen === "add-onboarding") page = <CommitmentForm eyebrow="Setup · Upcoming · Optional" title="Add Commitment" body="Add it to your week and estimate what it will take." submitText="Add & return" onBack={goBack} onManageModules={() => { setAssignmentBack("add-onboarding"); setModuleFocusId(undefined); navigate("assignments"); }} onSubmit={item => { saveCommitment(item); navigate(addOnboardingBack); }} onAddAnother={saveCommitment} secondaryAction={{ text: "Return without adding another", onPress: () => navigate(addOnboardingBack) }} />;
   else if (screen === "anything-else") page = <AnythingElseScreen initialNote={state.weeklyNote} onBack={goBack} onContinue={note => { patch({ weeklyNote: note }); navigate("preparing"); }} />;
   else if (screen === "preparing") page = <ScrollPage><PageHeader eyebrow="Your plan" title="Making room for your week" body="Putting your routine, assignments and personal limits together." /><View style={s.content}><ActivityIndicator size="large" color={colors.forest} /><Text style={s.body}>Your first check-in will be available tomorrow.</Text></View></ScrollPage>;
-  else if (screen === "today") page = <><CurrentHomeScreen {...menu} capacities={capacities} overall={overall} energy={energy} streak={streak} onTab={selectTab} onQuickAdd={quickAdd} onWeeklyNote={() => { setNoteReturn("today"); navigate("weekly-note"); }} onRebalance={() => { setPeriod("Weekly"); showPlan("All"); }} onTest={() => navigate("test-commitment")} onFlashcards={() => { setSecondaryBack("today"); navigate("flashcards"); }} lessonNames={state.modules.filter(m => m.days.includes(fromKey(today).getDay())).map(m => m.name)} hasMaterials={state.materials.length > 0} weeklyNote={state.weeklyNote} />{checkInVisible && checkInEligible && <CurrentCheckIn key={today + (currentCheck?.savedAt ?? "")} initial={currentCheck} modules={state.modules} hasSport={!!state.routineEntries.sport} sportPlanned={routinePlan(state.routineEntries, state.modules, today).some(item => item.routineId === "sport")} onClose={() => setCheckInVisible(false)} onPlan={() => { setCheckInVisible(false); setSecondaryBack("today"); navigate("assignments"); }} onSave={(check, goToPlan) => { patch({ checks: { ...state.checks, [today]: check } }); setCheckInVisible(false); if (goToPlan) showPlan("All"); }} />}</>;
-  else if (screen === "plan") page = <CurrentPlanScreen {...menu} filter={filter} unscheduled={state.commitments.filter(item => !item.startDate && !item.dueDate)} days={planDays} selectedDate={selectedDate} onDate={setSelectedDate} onTab={selectTab} onQuickAdd={quickAdd} onAdd={() => { setSecondaryBack("plan"); setEditing(undefined); navigate("add"); }} onEdit={item => { setSecondaryBack("plan"); setEditing(item.sourceId ? state.commitments.find(v => v.id === item.sourceId) ?? item : item); navigate("add"); }} onAction={onAction} onImport={() => { setSecondaryBack("plan"); navigate("assignments"); }} />;
-  else if (screen === "add") page = <CommitmentForm key={editing?.id ?? "new"} eyebrow="Your plan" title={editing ? "Edit Commitment" : "Add Commitment"} body="Choose how it fits your week and estimate the energy it needs." initial={editing} defaultDate={selectedDate} submitText={editing ? "Save changes" : "Add & continue"} onBack={goBack} onSubmit={item => { saveCommitment(item); showPlan("All"); }} onAddAnother={saveCommitment} />;
-  else if (screen === "flashcards") page = <FlashcardScreen modules={state.modules} materials={state.materials} onSave={materials => patch({ materials })} onBack={goBack} />;
-  else if (screen === "recovery") page = <CurrentRecoveryScreen days={recoveryDays} results={state.recoveryResults} onResult={(key, value) => patch({ recoveryResults: { ...state.recoveryResults, [key]: value } })} onTab={selectTab} onQuickAdd={quickAdd} />;
-  else if (screen === "profile") page = <ProfileScreen streak={streak} weeklyNote={state.weeklyNote} commitments={state.commitments} modules={state.modules} routines={state.routineEntries} answers={state.feelAnswers} onTab={selectTab} onQuickAdd={quickAdd} onBaseline={() => { setSetupActive(true); navigate("routine-checklist"); }} onWeeklyNote={() => { setNoteReturn("profile"); navigate("weekly-note"); }} />;
-  else if (screen === "schedule") page = <ScheduleScreen modules={state.modules} commitments={state.commitments} materials={state.materials} onBack={goBack} onImport={() => { setSetupActive(false); setImportReturn("schedule"); navigate("import-timetable"); }} />;
-  else if (screen === "assignments") page = <AssignmentsScreen modules={state.modules} onBack={goBack} onSave={saveModules} />;
+  else if (screen === "today") page = <><CurrentHomeScreen {...menu} capacities={capacities} overall={overall} energy={energy} streak={streak} onTab={selectTab} onQuickAdd={quickAdd} onWeeklyNote={() => { setNoteReturn("today"); navigate("weekly-note"); }} onRebalance={() => { setPeriod("Weekly"); showPlan("All"); }} onTest={() => navigate("test-commitment")} onFlashcards={() => { setFlashcardBack("today"); setMaterialFocusId(undefined); navigate("flashcards"); }} flashcardGroups={flashcardGroups} hasMaterials={state.materials.length > 0} weeklyNote={state.weeklyNote} />{checkInVisible && checkInEligible && <CurrentCheckIn key={today + (currentCheck?.savedAt ?? "")} initial={currentCheck} modules={state.modules} hasSport={!!state.routineEntries.sport} sportPlanned={routinePlan(state.routineEntries, state.modules, today).some(item => item.routineId === "sport")} onClose={() => setCheckInVisible(false)} onPlan={() => { setCheckInVisible(false); setAssignmentBack("today"); setModuleFocusId(undefined); navigate("assignments"); }} onSave={(check, goToPlan) => { patch({ checks: { ...state.checks, [today]: check } }); setCheckInVisible(false); setCheckInSaved(true); if (goToPlan) showPlan("All"); }} />}</>;
+  else if (screen === "plan") page = <CurrentPlanScreen {...menu} filter={filter} unscheduled={state.commitments.filter(item => !item.startDate && !item.dueDate)} days={planDays} selectedDate={selectedDate} onDate={setSelectedDate} onTab={selectTab} onQuickAdd={quickAdd} onAdd={() => { setSecondaryBack("plan"); setEditing(undefined); navigate("add"); }} onEdit={item => { setSecondaryBack("plan"); setEditing(item.sourceId ? state.commitments.find(v => v.id === item.sourceId) ?? item : item); navigate("add"); }} onAction={onAction} />;
+  else if (screen === "add") page = <CommitmentForm key={editing?.id ?? "new"} eyebrow="Your plan" title={editing ? "Edit Commitment" : "Add Commitment"} body="Add it to your week and estimate what it will take." initial={editing} defaultDate={selectedDate} submitText={editing ? "Save changes" : "Add & continue"} onBack={goBack} onManageModules={() => { setAssignmentBack("add"); setModuleFocusId(undefined); navigate("assignments"); }} onSubmit={item => { saveCommitment(item); showPlan("All"); }} onAddAnother={saveCommitment} />;
+  else if (screen === "flashcards") page = <FlashcardScreen modules={state.modules} materials={state.materials} initialModuleId={materialFocusId} onSave={materials => patch({ materials })} onBack={goBack} />;
+  else if (screen === "recovery") page = <CurrentRecoveryScreen days={recoveryDays} results={state.recoveryResults} onResult={(key, value) => patch({ recoveryResults: { ...state.recoveryResults, [key]: value } })} onPlan={date => { setSelectedDate(date); showPlan("All"); }} onTab={selectTab} onQuickAdd={quickAdd} />;
+  else if (screen === "profile") page = <ProfileScreen streak={streak} commitments={state.commitments} modules={state.modules} routines={state.routineEntries} answers={state.feelAnswers} onTab={selectTab} onQuickAdd={quickAdd} onBaseline={() => { setEditingBaseline(true); setBaselineBack("profile"); setFeelIndex(0); navigate("routine-checklist"); }} />;
+  else if (screen === "schedule") page = <ScheduleScreen modules={state.modules} commitments={state.commitments} onBack={goBack} onImport={() => { setImportReturn("schedule"); navigate("import-timetable"); }} onModules={() => { if (scheduleBack !== "assignments") setAssignmentBack("schedule"); setModuleFocusId(undefined); navigate("assignments"); }} onModule={moduleId => { if (scheduleBack !== "assignments") setAssignmentBack("schedule"); setModuleFocusId(moduleId); navigate("assignments"); }} />;
+  else if (screen === "assignments") page = <AssignmentsScreen modules={state.modules} materials={state.materials} initialModuleId={moduleFocusId} onBack={goBack} onSave={saveModules} onImport={() => { setImportReturn("assignments"); navigate("import-timetable"); }} onTimetable={() => { if (assignmentBack !== "schedule") setScheduleBack("assignments"); navigate("schedule"); }} onAddMaterial={moduleId => { setFlashcardBack("assignments"); setMaterialFocusId(moduleId); navigate("flashcards"); }} />;
   else if (screen === "weekly-note") page = <AnythingElseScreen standalone initialNote={state.weeklyNote} onBack={goBack} onContinue={note => { patch({ weeklyNote: note }); navigate(noteReturn); }} />;
   else if (screen === "test-commitment") page = <WhatIfForm draft={draft} date={today} onBack={() => navigate("today")} onTest={item => { setDraft(item); navigate("simulator"); }} />;
   else if (screen === "simulator" && draft) page = <WhatIfResult draft={draft} capacities={makeDay(draft.startDate ?? today).capacities} onBack={() => navigate("test-commitment")} onConfirm={() => { saveCommitment(draft); setSelectedDate(draft.startDate ?? today); setDraft(undefined); showPlan("All"); }} onDecline={() => { setDraft(undefined); navigate("today"); }} onPlan={() => showPlan("All")} />;
   else page = <WhatIfForm draft={draft} date={today} onBack={() => navigate("today")} onTest={item => { setDraft(item); navigate("simulator"); }} />;
-  return <StreakPetContext.Provider value={{ streak, hidden: screen === "profile", checkIn: screen === "today" && checkInEligible ? { label: currentCheck ? "Update today’s check-in" : "Complete today’s check-in", onPress: () => setCheckInVisible(true) } : undefined }}><View style={{ flex: 1 }}>{storageError ? <InlineNotice title="Saving needs attention" body={storageError} tone="amber" /> : null}{page}</View></StreakPetContext.Provider>;
+  return <StreakPetContext.Provider value={{ streak, hidden: screen === "profile", checkIn: screen === "today" && checkInEligible ? { label: currentCheck ? "Update today’s check-in" : "Complete today’s check-in", onPress: () => setCheckInVisible(true) } : undefined }}><View style={{ flex: 1 }}>{storageError ? <InlineNotice title="Saving needs attention" body={storageError} tone="amber" /> : null}{page}{checkInSaved ? <View pointerEvents="none" accessibilityRole="alert" accessibilityLiveRegion="polite" style={{ position: "absolute", top: 18, left: 20, right: 20, zIndex: 100 }}><InlineNotice title="Check-in saved" body="Today’s Plan and capacity are up to date." /></View> : null}</View></StreakPetContext.Provider>;
 }
