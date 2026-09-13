@@ -7,9 +7,9 @@
 
 **Problem Statement:** Stress & Workload Manager (Track 1)
 
-**Video Presentation:** https://canva.link/fnmufs0dwupt8gs
+**Video Presentation:** https://youtu.be/6tSoLNyqsLM
 
-**Presentation Slides:** _to be added_
+**Presentation Slides:** https://canva.link/fnmufs0dwupt8gs
 
 ## 1. Project Overview
 
