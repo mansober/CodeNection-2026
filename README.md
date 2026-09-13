@@ -1,9 +1,9 @@
 # Santai by TokenHabisBro
 
-**Team:** Ayman Al Mursyid Bin Mohd Puzhi
-          Noor Khairul Azizi Bin Noor Azman
-          Muhammad Hadi Hilmi Bin Mohamad Hamdan
-          Muhammad Danial Fitri Bin Mohd Khairizal
+**Team:** Ayman Al Mursyid Bin Mohd Puzhi, 
+          Noor Khairul Azizi Bin Noor Azman, 
+          Muhammad Hadi Hilmi Bin Mohamad Hamdan, 
+          Muhammad Danial Fitri Bin Mohd Khairizal 
 
 **Problem Statement:** Stress & Workload Manager (Track 1)
 
@@ -85,27 +85,27 @@ Two notes on how we read the brief. It never mentions grades, but for our users 
 
 ### 2.2 Ideation Boards
 
-![Feature list from the group chat](images/ideation-feature-list.jpg)
+![Feature list from the group chat]<img src="images/ideation-feature-list.jpg" width="250">
 
 *3:07am, our first full scope in the group chat. Ten numbered pages, most of which shipped. Item 9, the workload distribution pie chart, is the one we later cut.*
 
-![Flashcard idea](images/ideation-flashcard-idea.jpg)
+![Flashcard idea]<img src="images/ideation-flashcard-idea.jpg" width="250">
 
 *6 Sep, the flashcard idea being born. "sbb aku risau benda ni sama mcm org lain" means "because I'm worried this is the same as everyone else's". The next message answers it: "so dgn features ni kita lain dari yg lain".*
 
-![MVP cut](images/ideation-mvp-cut.png)
+![MVP cut]<img src="images/ideation-mvp-cut.png" width="250">
 
 *Cutting scope to an MVP. Calendar import, AI load estimation from free text and automatic rebalancing all moved to nice-to-have. Two of the three came back later once we had time.*
 
-![Mentor notes](images/ideation-mentor-notes.jpg)
+![Mentor notes]<img src="images/ideation-mentor-notes.jpg" width="250">
 
 *Our notes from the mentor session, written up in the team chat the same night. Every line in 2.3 traces back to this.*
 
-![First design pass](images/ideation-first-design.jpg)
+![First design pass]<img src="images/ideation-first-design.jpg" width="250">
 
 *Our first design, before the build. Four tabs including a Load tab, and 5D vocabulary on the buttons. Both were gone by 12 Sep.*
 
-![Mascot sketch](images/ideation-mascot-sketch.jpg)
+![Mascot sketch]<img src="images/ideation-mascot-sketch.jpg" width="250">
 
 *An early mascot sketch. We wanted a character a student opens daily, not a workload report. The final sprout came out of this pass.*
 
@@ -190,28 +190,28 @@ The moat comment is why this project has a shape. He told us to find one on the 
 
 > **[TEAM NOTE, delete before submitting]** Run `npm run export:web` in `/app`, deploy to Netlify, then check it opens in incognito.
 
-![Baseline ready](images/screen-baseline-ready.png)
+![Baseline ready]<img src="images/screen-baseline-ready.png" width="250">
 **Baseline ready.** Setup ends here: 16h/week routine, personal limits set, 5h recovery room. Importing a timetable or adding a commitment is offered, not forced.
 
-![Dashboard](images/screen-dashboard.png)
+![Dashboard]<img src="images/screen-dashboard.png" width="250">
 **Dashboard.** 83/100 energy left today, above the week's load split into four capacity bars. Bottom nav is Dashboard, Plan, Add, Recovery, Profile.
 
-![Add commitment estimate](images/screen-add-estimate.png)
+![Add commitment estimate]<img src="images/screen-add-estimate.png" width="250">
 **Adding a commitment.** Set time needed and overall effort, then Santai estimates the mental, physical and social cost before you confirm.
 
-![Plan](images/screen-plan.png)
+![Plan]<img src="images/screen-plan.png" width="250">
 **Plan.** Week view with commitments on their day and their current status. Every item can be kept, moved, handed over, skipped or made lighter.
 
-![Recovery suggested](images/screen-recovery-suggested.png)
+![Recovery suggested]<img src="images/screen-recovery-suggested.png" width="250">
 **Recovery, triggered.** Sunday's load crosses the line, so a matched suggestion appears. Here it is alone time, because social load is the tight one.
 
-![Recovery completed](images/screen-recovery-completed.png)
+![Recovery completed]<img src="images/screen-recovery-completed.png" width="250">
 **Recovery, closed out.** Mark it done, then say how it felt: Better, About the same, or Still drained.
 
-![Flashcards](images/screen-flashcard.png)
+![Flashcards]<img src="images/screen-flashcard.png" width="250">
 **Flashcards.** Upload materials against a module, then pull cards from what you uploaded. Grouped by module, day or topic.
 
-![Profile](images/screen-profile.png)
+![Profile]<img src="images/screen-profile.png" width="250">
 **Profile.** Mascot, streak, plan count and your baseline answers, editable without redoing setup.
 
 ## 4. What Makes It Different
