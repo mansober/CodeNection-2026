@@ -121,6 +121,9 @@ Two notes on how we read the brief. It never mentions grades, but for our users 
 
 
 
+**Problem Tree**
+
+
 ```mermaid
 flowchart TB
     C1["Campus runs constant<br/>hackathons and workshops"] --> P
@@ -137,6 +140,10 @@ flowchart TB
 ```
 
 *Problem tree. Our four-capacity model answers C4 and the daily check-in answers C5.*
+
+
+**Idea Evolvement**
+
 
 ```mermaid
 flowchart LR
@@ -157,6 +164,10 @@ flowchart LR
 ```
 
 *How the idea evolved. Dropped directions in red. The 6 Sep meeting is where we admitted the project was generic.*
+
+
+**Apps Flow**
+
 
 ```mermaid
 flowchart TD
@@ -182,6 +193,7 @@ flowchart TD
 ```
 
 *User flow. Five setup screens, then you are in. Without a timetable it cannot show today's flashcard, so the optional steps are recommended.*
+
 
 ### 2.3 Mentor Consultation
 
